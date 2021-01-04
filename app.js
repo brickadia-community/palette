@@ -138,7 +138,6 @@ window.onload = () => {
     initPalette();
   }
   snapshot();
-  repaintPreview();
 };
 
 // swap to elements in dom
