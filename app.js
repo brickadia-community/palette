@@ -104,6 +104,29 @@ window.onload = () => {
 
   $$('.images img').forEach(el => el.onclick = () => renderEyedropImage(el));
 
+  // allow dropping of files in
+  document.body.ondrop = async e => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (e.dataTransfer.items) {
+      const item = e.dataTransfer.items[0];
+      const file = item.getAsFile();
+      if (item.type === 'text/plain' || file.name.endsWith('.bp')) {
+        try {
+          importText(await file.text());
+        } catch (err) {
+          console.warn('error parsing text', file, err);
+        }
+      }
+    }
+  };
+
+  document.body.ondragover = e => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   try {
     if (localStorage.temp) {
       initPalette(JSON.parse(localStorage.temp));
@@ -152,48 +175,7 @@ document.onpaste = e => {
     reader.readAsDataURL(items[0].getAsFile());
   } else {
     let pasteData = e.clipboardData.getData('Text');
-
-    const blocklandRegex = /(((\d{1,3} \d{1,3} \d{1,3} \d{1,3}|\d\.\d{3} \d\.\d{3} \d\.\d{3} \d\.\d{3})(\s*)(\/\/.*)?\r?\n)+DIV:.*)/g;
-    pasteData = pasteData.replace(/[ ]*\/\/.*/, '')
-    const blMatches = pasteData.match(blocklandRegex);
-    if (blMatches) {
-      const data = {
-        description: 'Imported from blockland colorset',
-        groups: blMatches.map(div => ({
-          colors: div
-            .match(/(\d{1,3} \d{1,3} \d{1,3} \d{1,3}|\d\.\d{3} \d\.\d{3} \d\.\d{3} \d\.\d{3})/g)
-            .map(c => {
-              let [sR, sG, sB] = c.split(' ').map(Number);
-              if (c.match(/\d\.\d{3} \d\.\d{3} \d\.\d{3} \d\.\d{3}/)) {
-                sR *= 255;
-                sG *= 255;
-                sB *= 255;
-              }
-              const [r, g, b] = linearRGB([sR, sG, sB]);
-              return { r, g, b, a: 255 };
-            }),
-          name: div.match(/DIV: ?(.*)/)[1],
-        })),
-      }
-      initPalette(data);
-      snapshot();
-      return;
-    }
-
-    // try to parse the pasted data
-    if (pasteData && pasteData.length > 0) {
-      try {
-        const data = JSON.parse(pasteData);
-        if (data.formatVersion === '1' &&
-          data.presetVersion === '1' &&
-          data.type === 'ColorPalette') {
-          initPalette(data.data);
-          snapshot();
-        }
-      } catch (e) {
-        console.error('error pasting json', e);
-      }
-    }
+    importText(pasteData);
   }
 };
 
@@ -738,3 +720,48 @@ async function repaintPreview() {
 
   console.timeEnd('Paint');
 };
+
+// import text from clipboard or file
+function importText(text) {
+  const blocklandRegex = /(((\d{1,3} \d{1,3} \d{1,3} \d{1,3}|\d\.\d{3} \d\.\d{3} \d\.\d{3} \d\.\d{3})(\s*)(\/\/.*)?\r?\n)+DIV:.*)/g;
+  text = text.replace(/[ ]*\/\/.*/, '')
+  const blMatches = text.match(blocklandRegex);
+  if (blMatches) {
+    const data = {
+      description: 'Imported from blockland colorset',
+      groups: blMatches.map(div => ({
+        colors: div
+          .match(/(\d{1,3} \d{1,3} \d{1,3} \d{1,3}|\d\.\d{3} \d\.\d{3} \d\.\d{3} \d\.\d{3})/g)
+          .map(c => {
+            let [sR, sG, sB] = c.split(' ').map(Number);
+            if (c.match(/\d\.\d{3} \d\.\d{3} \d\.\d{3} \d\.\d{3}/)) {
+              sR *= 255;
+              sG *= 255;
+              sB *= 255;
+            }
+            const [r, g, b] = linearRGB([sR, sG, sB]);
+            return { r, g, b, a: 255 };
+          }),
+        name: div.match(/DIV: ?(.*)/)[1],
+      })),
+    }
+    initPalette(data);
+    snapshot();
+    return;
+  }
+
+  // try to parse the pasted data
+  if (text && text.length > 0) {
+    try {
+      const data = JSON.parse(text);
+      if (data.formatVersion === '1' &&
+        data.presetVersion === '1' &&
+        data.type === 'ColorPalette') {
+        initPalette(data.data);
+        snapshot();
+      }
+    } catch (e) {
+      console.error('error pasting json', e);
+    }
+  }
+}
