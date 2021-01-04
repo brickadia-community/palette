@@ -116,7 +116,7 @@ window.onload = () => {
     if (e.dataTransfer.items) {
       const item = e.dataTransfer.items[0];
       const file = item.getAsFile();
-      if (item.type === 'text/plain' || file.name.endsWith('.bp')) {
+      if (item.type === 'text/plain' || file.name.endsWith('.bp') || file.name.endsWith('.pal')) {
         try {
           importText(await file.text());
         } catch (err) {
@@ -374,6 +374,25 @@ document.onkeydown = e => {
 
     snapshot();
 
+  // insert a color in the group or after the existing swatch
+  } else if (e.code === 'KeyE' && !e.shiftKey) {
+    if (!selected) {
+      const group = createGroup([]);
+      group.appendChild(createColor('ffffff'));
+      snapshot();
+      return;
+    }
+
+    // if the dest is a group, put the color in there
+    if (selected.classList.contains('group')) {
+      selected.appendChild(createColor('ffffff'));
+    } else {
+      // move selected to the element
+      selected.after(createColor('ffffff'));
+    }
+    snapshot();
+
+
   // delete everything
   } else if (e.code === 'Delete' && e.shiftKey && e.ctrlKey) {
     e.preventDefault();
@@ -535,7 +554,7 @@ function save() {
     presetVersion: '1',
     type: 'ColorPalette',
     data: {
-      description: $('#palette > .add').getAttribute('description') || 'Built with palette creator',
+      description: $('#palette > .add').getAttribute('description') || 'Built with palette.brickadia.dev',
       // populate columns
       groups: $$('.group').map((c, columnIndex) => {
         // convert colors to linear rgb from whatever format is thrown in
@@ -566,7 +585,7 @@ function save() {
 function initPalette(data) {
   if (!data) {
     data = {
-      description: 'Built with palette creator',
+      description: 'Built with palette.brickadia.dev',
       groups: [],
     }
   }
@@ -727,6 +746,7 @@ async function repaintPreview() {
 // import text from clipboard or file
 function importText(text) {
   const blocklandRegex = /(((\d{1,3} \d{1,3} \d{1,3} \d{1,3}|\d\.\d{3} \d\.\d{3} \d\.\d{3} \d\.\d{3})(\s*)(\/\/.*)?\r?\n)+DIV:.*)/g;
+  const palRegex = /^JASC-PAL\r?\n0100\r?\n\d+\r?\n(\d+ \d+ \d+\r?\n)+/;
   text = text.replace(/[ ]*\/\/.*/, '')
   const blMatches = text.match(blocklandRegex);
   if (blMatches) {
@@ -747,6 +767,28 @@ function importText(text) {
           }),
         name: div.match(/DIV: ?(.*)/)[1],
       })),
+    }
+    initPalette(data);
+    snapshot();
+    return;
+  }
+
+  const palMatches = text.match(palRegex);
+  if (palMatches) {
+    const colors = text
+    .match(/(\d{1,3} \d{1,3} \d{1,3})/g)
+    .map(c => {
+      let [sR, sG, sB] = c.split(' ').map(Number);
+      const [r, g, b] = linearRGB([sR, sG, sB]);
+      return { r, g, b, a: 255 };
+    });
+    const groups = [];
+    while(colors.length) {
+      groups.push({colors: colors.splice(0, 16), name: ''});
+    }
+    const data = {
+      description: 'Imported from pal file',
+      groups,
     }
     initPalette(data);
     snapshot();
