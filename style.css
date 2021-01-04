@@ -39,8 +39,8 @@ h1, h2, h3 {
 }
 
 .eyedrop-container {
-  width: 600px;
-  height: 600px;
+  width: 400px;
+  height: 170px;
   resize: both;
   overflow: scroll;
   margin: 14px;
@@ -142,7 +142,7 @@ h1, h2, h3 {
   margin-bottom: 4px;
 }
 
-.group.selected::after, .group.selected::before {
+.group.selected::after, .group.selected::before, .group:hover::after, .group:hover::before {
   opacity: 1;
   top: -20px;
 }
@@ -211,6 +211,11 @@ h1, h2, h3 {
   z-index: 1;
   /*border-radius: 50%;*/
 }
+.color:hover {
+  transform: scale(1.4);
+  z-index: 2;
+  /*border-radius: 50%;*/
+}
 
 .button:hover { background-color: #779; }
 .button:active { background-color: #99b; }
@@ -226,4 +231,20 @@ h1, h2, h3 {
   margin-top: -15px;
   opacity: 0;
   pointer-events: none;
+}
+
+.preview {
+  margin-left: 14px;
+  width: 100%;
+  position: relative;
+}
+
+.preview img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+}
+.preview:hover img {
+  display: block;
 }

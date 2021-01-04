@@ -5,6 +5,8 @@ const $$ = (q, el) => Array.from((el || document).querySelectorAll(q));
 
 let pixels, dropWidth, dropHeight;
 
+const debounceRepaint = debounce(repaintPreview, 1000);
+
 const history = [];
 let undoStack = [];
 let used = [];
@@ -14,6 +16,7 @@ let used = [];
 function snapshot() {
   history.push($('#palette').innerHTML);
   save();
+  debounceRepaint();
   // remove entries over 1000
   history.splice(1000);
   undoStack = [];
@@ -60,7 +63,7 @@ window.onload = () => {
     } else {
       dropper.style.transform = 'translate(-50%, -100%)';
     }
-    dropper.style.background = `rgb(${pixels[off]}, ${pixels[off+1]}, ${pixels[off+2]})`;
+    dropper.style.backgroundColor = `rgb(${pixels[off]}, ${pixels[off+1]}, ${pixels[off+2]})`;
     const hex = [pixels[off], pixels[off+1], pixels[off+2]].map(i =>
       i.toString(16).padStart(2, '0')).join('');
     if (used.includes(hex))
@@ -93,7 +96,7 @@ window.onload = () => {
 
     } else if (selected.classList.contains('color') && selected.getAttribute('hex') !== hex) {
       // update a color if a color is selected
-      selected.style.background = '#' + hex;
+      selected.style.backgroundColor = '#' + hex;
       selected.setAttribute('hex', hex);
       snapshot();
     }
@@ -112,6 +115,7 @@ window.onload = () => {
     initPalette();
   }
   snapshot();
+  repaintPreview();
 };
 
 // swap to elements in dom
@@ -147,9 +151,10 @@ document.onpaste = e => {
     };
     reader.readAsDataURL(items[0].getAsFile());
   } else {
-    const pasteData = e.clipboardData.getData('Text');
+    let pasteData = e.clipboardData.getData('Text');
 
-    const blocklandRegex = /(((\d{1,3} \d{1,3} \d{1,3} \d{1,3}|\d\.\d{3} \d\.\d{3} \d\.\d{3} \d\.\d{3})\r?\n)+DIV:.*)/g;
+    const blocklandRegex = /(((\d{1,3} \d{1,3} \d{1,3} \d{1,3}|\d\.\d{3} \d\.\d{3} \d\.\d{3} \d\.\d{3})(\s*)(\/\/.*)?\r?\n)+DIV:.*)/g;
+    pasteData = pasteData.replace(/[ ]*\/\/.*/, '')
     const blMatches = pasteData.match(blocklandRegex);
     if (blMatches) {
       const data = {
@@ -212,6 +217,7 @@ const getIndex = el => {
   return [groups.findIndex(e => e == el.parentNode), $$('.color', el.parentNode).findIndex(e => e == el)];
 };
 
+// keybinds
 document.onkeydown = e => {
   const selected = $('.selected');
 
@@ -258,7 +264,7 @@ document.onkeydown = e => {
     $('#colorPicker').value = '#' + selected.getAttribute('hex');
     $('#colorPicker').onchange = e => {
       selected.setAttribute('hex', e.target.value.replace(/^#/, ''))
-      selected.style.background = e.target.value;
+      selected.style.backgroundColor = e.target.value;
       snapshot();
       $('#colorPicker').onchange = () => {};
     };
@@ -457,6 +463,9 @@ function renderEyedropImage(image) {
   // set the canvas size
   canvas.style.width = (dropWidth = canvas.width = ctx.canvas.width = image.naturalWidth) + 'px';
   canvas.style.height = (dropHeight = canvas.height = ctx.canvas.height = image.naturalHeight) + 'px';
+  $('.eyedrop-container').style.width = dropWidth + 32 + 'px';
+  $('.eyedrop-container').style.height = dropHeight + 32 + 'px';
+
 
   // draw the image
   ctx.drawImage(image, 0, 0);
@@ -466,6 +475,7 @@ function renderEyedropImage(image) {
   $('.instructions').style.display = 'none';
 }
 
+// create + button
 function addBtn() {
   const elem = document.createElement('div');
   elem.className = 'add button';
@@ -473,6 +483,7 @@ function addBtn() {
   return elem;
 }
 
+// select an element
 function select(elem) {
   if (!elem) return;
   $$('.selected').forEach(e => e.classList.remove('selected'));
@@ -566,6 +577,7 @@ function save() {
   return data;
 }
 
+// load a palette into DOM
 function initPalette(data) {
   if (!data) {
     data = {
@@ -627,3 +639,102 @@ function initPalette(data) {
     el.setAttribute('name', group.name || ('Col' + ++i))
   }
 }
+
+// distance between two colors
+function colorDifference([r1, g1, b1], [r2, g2, b2]) {
+  return Math.sqrt(
+    (r1 - r2) * (r1 - r2) +
+    (g1 - g2) * (g1 - g2) +
+    (b1 - b2) * (b1 - b2)
+  );
+}
+
+// debounce fn
+function debounce(func, wait, immediate) {
+  var timeout;
+  return function() {
+    var context = this, args = arguments;
+    var later = function() {
+      timeout = null;
+      if (!immediate) func.apply(context, args);
+    };
+    var callNow = immediate && !timeout;
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+    if (callNow) func.apply(context, args);
+  };
+};
+
+// repaint test palette
+async function repaintPreview() {
+  const canvas = $('#testImg');
+  const parrot = $('#parrot');
+  const ctx = canvas.getContext('2d');
+  canvas.style.width = parrot.width + 'px';
+  canvas.style.height = parrot.height + 'px';
+  ctx.canvas.width = parrot.width;
+  ctx.canvas.height = parrot.height;
+
+  // get the colors from this palette
+  const colors = $$('.color').map(c => c.style.backgroundColor.match(/[\d\.]+/g).map(Number).slice(0, 3));
+
+  // render the parrot
+  ctx.drawImage(parrot, 0, 0, parrot.width, parrot.height);
+  if (colors.length < 2) return;
+
+  // get the image data
+  const imageData = ctx.getImageData(0, 0, parrot.width, parrot.height);
+  const pixels = imageData.data;
+
+  // cached color match
+  const cache = {};
+
+  console.time('Paint');
+  // await this to wait for a new frame (async rendering)
+  const frame = () => new Promise(resolve => requestAnimationFrame(resolve));
+
+  // render the preview parrot using the palette
+  let lastFrame = performance.now();
+  const { width, height } = parrot;
+
+  // iterate through pixels
+  for (let y = 0, i = 0; y < height; y++) {
+    for (let x = 0; x < width; x++, i+=4) {
+
+      // get the currnet color
+      const color = [pixels[i], pixels[i+1], pixels[i+2]];
+      // use a cached color if we haven't calculated the closest color for this pixel yet
+      if (!cache[color]) {
+        // find the closest color to the selected one
+        let closest = colors[0];
+        let dist = colorDifference(closest, color);
+        for (let j = 0; j < colors.length; j++) {
+          const dist2 = colorDifference(colors[j], color);
+          if (dist > dist2) {
+            closest = colors[j];
+            dist = dist2;
+          }
+        }
+        cache[color] = closest;
+      }
+
+      // update the image data for the canvas
+      pixels[i] = cache[color][0];
+      pixels[i+1] = cache[color][1];
+      pixels[i+2] = cache[color][2];
+    }
+
+    // if more than 10MS have passed, render the image and wait for the next frame
+    if (performance.now() - lastFrame > 10) {
+      ctx.putImageData(imageData, 0, 0);
+      // this will stop the website from freezing up for hundreds of milliseconds
+      await frame();
+      lastFrame = performance.now();
+    }
+  }
+
+  // render final image
+  ctx.putImageData(imageData, 0, 0);
+
+  console.timeEnd('Paint');
+};
