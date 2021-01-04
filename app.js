@@ -557,6 +557,7 @@ document.onkeydown = e => {
 
   // delete whatever is selected
   } else if (e.code === 'Space') {
+    e.preventDefault();
     $$('.selected').forEach(e => e.classList.remove('selected'));
 
   // next group/new group
