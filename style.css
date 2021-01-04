@@ -23,6 +23,14 @@ h1, h2, h3 {
   margin: 8px 0;
 }
 
+table {
+  border-spacing: none;
+}
+
+tr:hover td {
+  background-color: #111;
+}
+
 #dropper {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
