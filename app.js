@@ -116,7 +116,6 @@ window.onload = () => {
   };
 
   $('#selector').onmousedown = e => {
-    console.log('down');
     const { layerX: x, layerY: y } = e;
 
     startPos = [x, y];
@@ -175,7 +174,6 @@ window.onload = () => {
 
   // add the color on click
   $('#selector').onclick = e => {
-    console.log('click')
     const selected = $('.selected');
 
     // insert a list of colors
