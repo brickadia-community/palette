@@ -28,6 +28,8 @@ function redo() {
   const state = undoStack.pop();
   history.push(state);
   $('#palette').innerHTML = state;
+  save();
+  debounceRepaint();
 }
 
 // undo some history
@@ -36,6 +38,8 @@ function undo() {
   const state = history.pop();
   undoStack.push(state);
   $('#palette').innerHTML = history[history.length - 1];
+  save();
+  debounceRepaint();
 }
 
 window.onload = () => {
