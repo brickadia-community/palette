@@ -1,0 +1,229 @@
+body, html {
+  margin: 0;
+  background-color: black;
+  color: white;
+  font-family: monospace;
+}
+
+body {
+  margin: 14px;
+}
+
+#selector {
+}
+
+h1, h2, h3 {
+  margin: 8px 0;
+}
+
+#dropper {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  text-align: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  position: absolute;
+  top: -100px;
+  left: 0;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+}
+
+#noinfo:target {
+  display: none;
+}
+
+.eyedrop-container {
+  width: 600px;
+  height: 600px;
+  resize: both;
+  overflow: scroll;
+  margin: 14px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  background: repeating-conic-gradient(#f5f5f5 0% 25%, white 0% 50%)
+    50% / 20px 20px;
+}
+
+.eyedrop {
+  position: relative;
+}
+
+.instructions {
+  color: #444;
+  font-weight: bold;
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background-color: white;
+  box-shadow: 0 0 30px 10px white;
+}
+
+.picker {
+  display: flex;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+}
+
+.images {
+  display: flex;
+  flex-flow: row wrap;
+}
+
+.images img {
+  cursor: pointer;
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+}
+
+.button {
+  background-color: #557;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  height: 32px;
+  user-select: none;
+  cursor: pointer;
+}
+
+#palette {
+  margin: 14px;
+  background-color: #224;
+  display: flex;
+  padding: 2px;
+  align-items: flex-start;
+  position: relative;
+}
+
+.group {
+  min-width: 32px;
+  padding: 2px;
+  border: 2px solid transparent;
+  margin: 4px;
+  order: 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  background-color: #335;
+  position: relative;
+}
+
+.group .stub {
+  background-color: #112;
+  width: 40px;
+  height: 24px;
+  order: -10;
+  display: flex;
+  margin: -4px;
+  margin-bottom: 4px;
+}
+
+
+.group.selected {
+  border: 2px solid #aad;
+}
+
+.group.selected .stub {
+  margin: -2px;
+  width: 36px;
+  height: 22px;
+  margin-bottom: 4px;
+}
+
+.group.selected::after, .group.selected::before {
+  opacity: 1;
+  top: -20px;
+}
+.group::after, .group::before {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+  top: -10px;
+  background-color: #335;
+  left: 0;
+  transition: opacity .1s ease, top .1s ease;
+}
+
+.group::before {
+  content: attr(name);
+  white-space: nowrap;
+  min-width: 40px;
+  height: 24px;
+  padding: 0 4px;
+  transform: translate(0%, -100%);
+  display: flex;
+  align-items: center;
+  z-index: 1;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.group::after {
+  content: '';
+  width: 24px;
+  height: 24px;
+  transform: translate(5px, -12px) rotate(45deg);
+}
+
+#palette > .add {
+  margin: 4px;
+}
+
+#palette > .add::before {
+  content: "Description: " attr(description);
+  position: absolute;
+  pointer-events: none;
+  top: -2px;
+  left: 0;
+  transform: translateY(-100%);
+  font-weight: normal;
+  font-size: 14px;
+}
+
+.color {
+  order: 0;
+  width: 32px;
+  height: 32px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  transform: scale(1);
+  transition: transform .1s ease;
+}
+
+.color.selected {
+  width: 28px;
+  height: 28px;
+  border: 2px solid #aad;
+  transform: scale(1.4);
+  z-index: 1;
+  /*border-radius: 50%;*/
+}
+
+.button:hover { background-color: #779; }
+.button:active { background-color: #99b; }
+
+.add {
+  width: 32px;
+  order: 10;
+}
+
+#colorPicker {
+  position: absolute;
+  left: 28px;
+  margin-top: -15px;
+  opacity: 0;
+  pointer-events: none;
+}
