@@ -31,6 +31,10 @@ tr:hover td {
   background-color: #111;
 }
 
+.keybinds td:first-child {
+  max-width: 200px;
+}
+
 #dropper {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);

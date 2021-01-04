@@ -249,6 +249,14 @@ window.onload = () => {
           console.warn('error parsing text', file, err);
         }
       }
+
+      if (item.type.startsWith('image/')) {
+        try {
+          importImage(file);
+        } catch (err) {
+          console.warn('error importing image', file, err);
+        }
+      }
     }
   };
 
@@ -291,17 +299,7 @@ document.onpaste = e => {
     .filter(i => i.type.indexOf('image') === 0);
 
   if (items.length > 0) {
-    const reader = new FileReader();
-    reader.onload = function(event) {
-      const img = new Image();
-      img.src = event.target.result;
-      img.onload = res => {
-        if (img.width > 0 && img.height > 0) {
-          renderEyedropImage(img);
-        }
-      }
-    };
-    reader.readAsDataURL(items[0].getAsFile());
+    importImage(items[0].getAsFile());
   } else {
     let pasteData = e.clipboardData.getData('Text');
     importText(pasteData);
@@ -948,4 +946,19 @@ function importText(text) {
       console.error('error pasting json', e);
     }
   }
+}
+
+// import a file as an image
+function importImage(file) {
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    const img = new Image();
+    img.src = event.target.result;
+    img.onload = res => {
+      if (img.width > 0 && img.height > 0) {
+        renderEyedropImage(img);
+      }
+    }
+  };
+  reader.readAsDataURL(file);
 }
