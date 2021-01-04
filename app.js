@@ -112,6 +112,7 @@ window.onload = () => {
     const dropper = $('#dropper');
     dropper.style.display = 'none';
     document.body.style.overflow = 'auto';
+    drawSelectLine([-1, -1], [-1, -1], notches);
     dragging = false;
   };
 
