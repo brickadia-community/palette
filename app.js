@@ -734,6 +734,12 @@ function initPalette(data) {
   $('#palette').onclick = e => {
     const elem = e.target;
 
+    // when clicking on palette bg, deselect selected
+    if (elem.id === 'palette') {
+      $$('.selected').forEach(e => e.classList.remove('selected'));
+      return;
+    }
+
     // toggle color select
     if (elem.classList.contains('color')) {
        if (elem.classList.contains('selected'))
