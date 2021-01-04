@@ -42,41 +42,54 @@ function undo() {
   debounceRepaint();
 }
 
+// get hex color at
+const getHexAt = (x, y) => {
+  const off = (dropWidth * y + x) * 4;
+  return [pixels[off], pixels[off+1], pixels[off+2]].map(i =>
+    i.toString(16).padStart(2, '0')).join('');
+}
+
 let rowColors = [];
-function drawSelectLine([sX, sY], [eX, eY], notches) {
+let rowColors2D = [];
+
+// draw the drag color select widget
+function drawSelectLine([sX, sY]=[-1,-1], [eX, eY]=[-1,-1], dragSizeX=2, [e2X, e2Y]=[-1, -1], dragSizeY=1) {
   if (!pixels) return;
-  const theta = Math.atan2(eY - sY, eX - sX);
-  const length = Math.hypot(sY - eY, sX - eX);
-  const segment = length / (notches - 1);
+  // angle between start and end
+  const thetaX = Math.atan2(eY - sY, eX - sX);
+  // length between start and end
+  const lengthX = Math.hypot(sY - eY, sX - eX);
+  // size of line divided into chunks
+  const segmentX = lengthX / (dragSizeX - 1);
+
+  // same thing for the second drag
+  const thetaY = Math.atan2(e2Y - eY, e2X - eX);
+  const lengthY = Math.hypot(e2Y - eY, e2X - eX);
+  const segmentY = lengthY / (dragSizeY - 1);
+
+  // size of the pin
   const wedgeSize = 10;
 
+  // reset canvas
   const overlay = $('#overlay');
   const ctx = overlay.getContext('2d');
-  ctx.clearRect(0, 0, dropWidth, dropHeight);
-  rowColors = [];
-  if (length < 10)
-    return;
-
   ctx.textAlign = 'center';
   ctx.textBaseline = 'center';
   ctx.strokeStyle = 'black';
-  ctx.beginPath();
-  ctx.moveTo(sX, sY);
-  ctx.lineTo(eX, eY);
-  ctx.closePath();
-  ctx.stroke();
+  ctx.clearRect(0, 0, dropWidth, dropHeight);
+
+  // colors used in the drag
+  rowColors = [];
+  rowColors2D = [];
+
+  if (lengthX < 10)
+    return;
+
   dropper.style.display = 'none';
 
-  for (let i = 0; i < notches; i++) {
+  const markerAt = (x, y, hex) => {
     ctx.save();
-    const x = Math.round(Math.cos(theta) * i * segment + sX);
-    const y = Math.round(Math.sin(theta) * i * segment + sY);
-    ctx.translate(x, y);
-    const off = (dropWidth * y + x) * 4;
-    const hex = [pixels[off], pixels[off+1], pixels[off+2]].map(i =>
-      i.toString(16).padStart(2, '0')).join('');
-
-    ctx.translate(0, -1.41 * wedgeSize / 2)
+    ctx.translate(x, y -1.41 * wedgeSize / 2);
     ctx.beginPath();
     ctx.moveTo(0, 1.41 * wedgeSize / 2);
     ctx.arc(0, -1.41 * wedgeSize / 2, 10, Math.PI, 0);
@@ -96,38 +109,114 @@ function drawSelectLine([sX, sY], [eX, eY], notches) {
     }
 
     rowColors.push(hex);
+    rowColors2D[rowColors2D.length - 1].push(hex);
 
+    ctx.restore();
+  };
+
+  for (let j = 0; j < dragSizeY; j++) {
+    rowColors2D.push([]);
+    const offX = dragSizeY > 1 ? Math.round(Math.cos(thetaY) * j * segmentY + sX) : sX;
+    const offY = dragSizeY > 1 ? Math.round(Math.sin(thetaY) * j * segmentY + sY) : sY;
+    ctx.save();
+    ctx.translate(offX, offY);
+
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(eX - sX, eY - sY);
+    ctx.closePath();
+    ctx.stroke();
+
+    for (let i = 0; i < dragSizeX; i++) {
+      const x = Math.round(Math.cos(thetaX) * i * segmentX);
+      const y = Math.round(Math.sin(thetaX) * i * segmentX);
+
+      if (dragSizeY > 1 && j === 0) {
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(
+          x + Math.round(Math.cos(thetaY) * lengthY),
+          y + Math.round(Math.sin(thetaY) * lengthY),
+        );
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      markerAt(x, y, getHexAt(x + offX, y + offY));
+    }
     ctx.restore();
   }
 }
 
-window.onload = () => {
-  let dragging = false;
-  let notches = 2;
-  let startPos = [-1, -1];
-  let curPos = [-1, -1];
+let dragging = false;
+let dragSizeX = 2;
+let dragSizeY = 1;
+let startPos = [-1, -1]; // drag start position
+let dragPosX = [-1, -1]; // first dimension dragging
+let dragPosY = [-1, -1]; // second dimension dragging
 
+// length of drag
+const dragLength = () => Math.hypot(
+  startPos[1] - (dragSizeY > 1 ? dragPosY[1] : dragPosX[1]),
+  startPos[0] - (dragSizeY > 1 ? dragPosY[0] : dragPosX[0]),
+);
+
+window.onload = () => {
+  let fakeClick = false;
   // hide the dropper on mouse leave
   $('#selector').onmouseleave = e => {
     const dropper = $('#dropper');
     dropper.style.display = 'none';
     document.body.style.overflow = 'auto';
-    drawSelectLine([-1, -1], [-1, -1], notches);
+    drawSelectLine();
     dragging = false;
   };
 
   $('#selector').onmousedown = e => {
     const { layerX: x, layerY: y } = e;
 
-    startPos = [x, y];
-    curPos = [x, y];
-    dragging = true;
+    if (dragging && dragSizeY > 1) {
+      $('#selector').onclick(e);
+      fakeClick = true;
+      return;
+    }
+
+    // left button
+    if (e.button === 0) {
+      startPos = [x, y];
+      dragPosX = [x, y];
+      dragPosY = [-1, -1];
+      dragSizeY = 1;
+      dragging = true;
+    }
+    // right button
+    if (e.button === 2 && dragging && dragLength() >= 10) {
+      dragPosY = [x, y];
+      dragSizeY = 2;
+    }
   };
+  $('#selector').oncontextmenu = e => {
+    if (dragging && dragLength() >= 10) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.cancelBubble = true;
+    }
+  }
 
   window.onwheel = e => {
     if (dragging) {
-      notches = Math.min(Math.max(notches - Math.sign(e.deltaY), 2), 16);
-      drawSelectLine(startPos, curPos, notches);
+      if (dragSizeY > 1) {
+        dragSizeY = Math.min(Math.max(dragSizeY - Math.sign(e.deltaY), 2), 16);
+      } else {
+        dragSizeX = Math.min(Math.max(dragSizeX - Math.sign(e.deltaY), 2), 16);
+      }
+      drawSelectLine(startPos, dragPosX, dragSizeX, dragPosY, dragSizeY);
+    }
+  };
+
+  $('#selector').onmouseup = e =>{
+    if (e.button === 0 && dragging && dragSizeY > 1) {
+      $('#selector').onclick(e);
     }
   };
 
@@ -137,15 +226,20 @@ window.onload = () => {
     const dropper = $('#dropper');
 
     if (dragging) {
-      curPos = [x, y];
-      const length = Math.hypot(startPos[1] - curPos[1], startPos[0] - curPos[0]);
-      if (length >= 10) {
-        drawSelectLine(startPos, curPos, notches);
-        document.body.style.overflow = 'hidden';
+      if (dragSizeY > 1) {
+        dragPosY = [x, y];
+        drawSelectLine(startPos, dragPosX, dragSizeX, dragPosY, dragSizeY);
         return;
       } else {
-        drawSelectLine([-1, -1], [-1, -1], notches);
-        document.body.style.overflow = 'flex';
+        dragPosX = [x, y];
+        if (dragLength() >= 10) {
+          drawSelectLine(startPos, dragPosX, dragSizeX, dragPosY, dragSizeY);
+          document.body.style.overflow = 'hidden';
+          return;
+        } else {
+          drawSelectLine();
+          document.body.style.overflow = 'flex';
+        }
       }
     }
 
@@ -178,14 +272,15 @@ window.onload = () => {
     const selected = $('.selected');
 
     // insert a list of colors
-    const insertColors = colors => {
+    const insertColors = (colors, forceGroup) => {
       const hex = colors[0];
-      if (!selected) {
+      if (!selected || forceGroup) {
         // create a new group if there is nothing currently selected
         const group = createGroup([], colors.length !== 1);
         for (const hex of colors)
           group.appendChild(createColor(hex, true));
-        snapshot();
+        if (!forceGroup)
+          snapshot();
 
       } else if (selected.classList.contains('group')) {
         // add a new color to the group if a group is selected
@@ -211,12 +306,19 @@ window.onload = () => {
 
     // handle drag color selectin
     if (dragging) {
-      const length = Math.hypot(startPos[1] - curPos[1], startPos[0] - curPos[0]);
+      const length = Math.hypot(startPos[1] - dragPosX[1], startPos[0] - dragPosX[0]);
       document.body.style.overflow = 'auto';
       dragging = false;
       // insert multiple colors if the drag is a success
       if (length >= 10) {
-        insertColors(rowColors);
+        if (rowColors2D.length > 1) {
+          for (const colors of rowColors2D) {
+            insertColors(colors, true);
+          }
+          snapshot();
+        } else {
+          insertColors(rowColors);
+        }
         drawSelectLine([-1, -1], [-1, -1], 0);
         return;
       }
@@ -308,7 +410,7 @@ document.onpaste = e => {
 };
 
 // get the color or group given a column and a row
-const getAt = (col, row=-1) => {
+const getSwatchAt = (col, row=-1) => {
   const group = $$('.group')[col];
   const colors = $$('.color', group);
   return row > -1 && colors.length > row ?
@@ -395,27 +497,27 @@ document.onkeydown = e => {
   } else if (e.code === 'KeyW') {
 
     // if nothing is selected, select the first group
-    if (!selected) return modFn(getAt(0));
+    if (!selected) return modFn(getSwatchAt(0));
 
     const [col, row] = getIndex(selected);
-    const lastColor = getAt(col, -2);
+    const lastColor = getSwatchAt(col, -2);
     // if the group is selected, select the last color
     if ((row === -1 || row === 0 && e.shiftKey) && lastColor) {
       modFn(lastColor);
     // select the group if it's the first color
     } else if (row === 0) {
-      modFn(getAt(col));
+      modFn(getSwatchAt(col));
     // otherwise select the previous color
     } else {
-      modFn(getAt(col, row-1));
+      modFn(getSwatchAt(col, row-1));
     }
   } else if (e.code === 'KeyS') {
     const selected = $('.selected');
     // if nothing is selected, select the first group
-    if (!selected) return modFn(getAt(0));
+    if (!selected) return modFn(getSwatchAt(0));
 
     const [col, row] = getIndex(selected);
-    const firstColor = getAt(col, 0);
+    const firstColor = getSwatchAt(col, 0);
     // if the group is selected, select the last color
     if (row === -1 && firstColor) {
       modFn(firstColor);
@@ -423,32 +525,32 @@ document.onkeydown = e => {
     // otherwise select the previous color
     } else {
       // if there's no more colors in this group, select the group
-      if (row + 1 >= $$('.color', getAt(col)).length) {
-        modFn(getAt(col, e.shiftKey ? 0 : -1));
+      if (row + 1 >= $$('.color', getSwatchAt(col)).length) {
+        modFn(getSwatchAt(col, e.shiftKey ? 0 : -1));
       } else {
         // otherwise select the next color
-        modFn(getAt(col, row+1));
+        modFn(getSwatchAt(col, row+1));
       }
     }
 
   } else if (e.code === 'KeyA' && !e.ctrlKey) {
     // if nothing is selected, select the first group
-    if (!selected) return modFn(getAt(0));
+    if (!selected) return modFn(getSwatchAt(0));
 
     // select the previous group + wrap around
     const [col, row] = getIndex(selected);
     const numGroups = $$('.group').length;
     if (numGroups < 2) return;
-    modFn(getAt((col + numGroups - 1) % numGroups, row));
+    modFn(getSwatchAt((col + numGroups - 1) % numGroups, row));
 
   } else if (e.code === 'KeyD' && !e.ctrlKey) {
-    if (!selected) return modFn(getAt(0));
+    if (!selected) return modFn(getSwatchAt(0));
 
    // select the next group + wrap around
     const [col, row] = getIndex(selected);
     const numGroups = $$('.group').length;
     if (numGroups < 2) return;
-    modFn(getAt((col + 1) % numGroups, row));
+    modFn(getSwatchAt((col + 1) % numGroups, row));
 
   // move color to the left
   } else if (e.code === 'KeyA' && e.ctrlKey) {
@@ -460,7 +562,7 @@ document.onkeydown = e => {
     const [col, row] = getIndex(selected);
     const numGroups = $$('.group').length;
     if (numGroups < 2) return;
-    const el = getAt((col + numGroups - 1) % numGroups, row);
+    const el = getSwatchAt((col + numGroups - 1) % numGroups, row);
 
     // ignore group movements
     if (selected.classList.contains('group')) return;
@@ -484,7 +586,7 @@ document.onkeydown = e => {
     const [col, row] = getIndex(selected);
     const numGroups = $$('.group').length;
     if (numGroups < 2) return;
-    const el = getAt((col + 1) % numGroups, row);
+    const el = getSwatchAt((col + 1) % numGroups, row);
 
     // ignore group movements
     if (selected.classList.contains('group')) return;
