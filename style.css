@@ -12,6 +12,13 @@ body {
 #selector {
 }
 
+#overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
 h1, h2, h3 {
   margin: 8px 0;
 }
@@ -61,6 +68,7 @@ h1, h2, h3 {
   left: 14px;
   background-color: white;
   box-shadow: 0 0 30px 10px white;
+  pointer-events: none;
 }
 
 .picker {

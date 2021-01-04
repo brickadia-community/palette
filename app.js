@@ -42,24 +42,121 @@ function undo() {
   debounceRepaint();
 }
 
+let rowColors = [];
+function drawSelectLine([sX, sY], [eX, eY], notches) {
+  if (!pixels) return;
+  const theta = Math.atan2(eY - sY, eX - sX);
+  const length = Math.hypot(sY - eY, sX - eX);
+  const segment = length / (notches - 1);
+  const wedgeSize = 10;
+
+  const overlay = $('#overlay');
+  const ctx = overlay.getContext('2d');
+  ctx.clearRect(0, 0, dropWidth, dropHeight);
+  rowColors = [];
+  if (length < 10)
+    return;
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'center';
+  ctx.strokeStyle = 'black';
+  ctx.beginPath();
+  ctx.moveTo(sX, sY);
+  ctx.lineTo(eX, eY);
+  ctx.closePath();
+  ctx.stroke();
+  dropper.style.display = 'none';
+
+  for (let i = 0; i < notches; i++) {
+    ctx.save();
+    const x = Math.round(Math.cos(theta) * i * segment + sX);
+    const y = Math.round(Math.sin(theta) * i * segment + sY);
+    ctx.translate(x, y);
+    const off = (dropWidth * y + x) * 4;
+    const hex = [pixels[off], pixels[off+1], pixels[off+2]].map(i =>
+      i.toString(16).padStart(2, '0')).join('');
+
+    ctx.translate(0, -1.41 * wedgeSize / 2)
+    ctx.beginPath();
+    ctx.moveTo(0, 1.41 * wedgeSize / 2);
+    ctx.arc(0, -1.41 * wedgeSize / 2, 10, Math.PI, 0);
+    ctx.lineTo(0, 1.41 * wedgeSize / 2);
+    ctx.closePath();
+    ctx.fillStyle = '#' + hex;
+    ctx.fill();
+    ctx.stroke();
+
+    // draw an X for duplicate colors
+    if (used.includes(hex) || rowColors.includes(hex)) {
+      ctx.translate(0, -1.14 * wedgeSize/2);
+      ctx.fillStyle = 'black'
+      ctx.fillText('x', 1, 1);
+      ctx.fillStyle = 'white'
+      ctx.fillText('x', 0, 0);
+    }
+
+    rowColors.push(hex);
+
+    ctx.restore();
+  }
+}
+
 window.onload = () => {
+  let dragging = false;
+  let notches = 2;
+  let startPos = [-1, -1];
+  let curPos = [-1, -1];
+
   // hide the dropper on mouse leave
   $('#selector').onmouseleave = e => {
     const dropper = $('#dropper');
     dropper.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    dragging = false;
+  };
+
+  $('#selector').onmousedown = e => {
+    console.log('down');
+    const { layerX: x, layerY: y } = e;
+
+    startPos = [x, y];
+    curPos = [x, y];
+    dragging = true;
+  };
+
+  window.onwheel = e => {
+    if (dragging) {
+      notches = Math.min(Math.max(notches - Math.sign(e.deltaY), 2), 16);
+      drawSelectLine(startPos, curPos, notches);
+    }
   };
 
   // set the eyedrop color on hover
   $('#selector').onmousemove = e => {
-    if (!pixels) return;
-    const dropper = $('#dropper');
     const { layerX: x, layerY: y } = e;
+    const dropper = $('#dropper');
+
+    if (dragging) {
+      curPos = [x, y];
+      const length = Math.hypot(startPos[1] - curPos[1], startPos[0] - curPos[0]);
+      if (length >= 10) {
+        drawSelectLine(startPos, curPos, notches);
+        document.body.style.overflow = 'hidden';
+        return;
+      } else {
+        drawSelectLine([-1, -1], [-1, -1], notches);
+        document.body.style.overflow = 'flex';
+      }
+    }
+
+    if (!pixels) return;
+
     const off = (dropWidth * y + x) * 4;
     if ((pixels[off+3]) === 0) {
       dropper.style.display = 'none';
       return;
     }
-    dropper.style.display = 'block';
+    dropper.style.display = 'flex';
     dropper.style.left = x + 'px';
     dropper.style.top = y + 'px';
     if (y < 40) {
@@ -78,32 +175,63 @@ window.onload = () => {
 
   // add the color on click
   $('#selector').onclick = e => {
+    console.log('click')
+    const selected = $('.selected');
+
+    // insert a list of colors
+    const insertColors = colors => {
+      const hex = colors[0];
+      if (!selected) {
+        // create a new group if there is nothing currently selected
+        const group = createGroup([], colors.length !== 1);
+        for (const hex of colors)
+          group.appendChild(createColor(hex, true));
+        snapshot();
+
+      } else if (selected.classList.contains('group')) {
+        // add a new color to the group if a group is selected
+        for (const hex of colors)
+          selected.appendChild(createColor(hex, true));
+        snapshot();
+
+      // a color is selected but we're dragging - add after this color
+      } else if (selected.classList.contains('color') && colors.length > 1) {
+        colors.reverse();
+        for(const hex of colors)
+          selected.after(createColor(hex, true));
+
+      } else if (colors.length === 1 && selected.classList.contains('color') && selected.getAttribute('hex') !== hex) {
+        // update a color if a color is selected
+        selected.style.backgroundColor = '#' + hex;
+        selected.setAttribute('hex', hex);
+        snapshot();
+      }
+    }
+
     if (!pixels) return;
+
+    // handle drag color selectin
+    if (dragging) {
+      const length = Math.hypot(startPos[1] - curPos[1], startPos[0] - curPos[0]);
+      document.body.style.overflow = 'auto';
+      dragging = false;
+      // insert multiple colors if the drag is a success
+      if (length >= 10) {
+        insertColors(rowColors);
+        drawSelectLine([-1, -1], [-1, -1], 0);
+        return;
+      }
+    }
+    drawSelectLine([-1, -1], [-1, -1], 0);
     const { layerX: x, layerY: y } = e;
     const off = (dropWidth * y + x) * 4;
-    const selected = $('.selected');
     const hex = [pixels[off], pixels[off+1], pixels[off+2]].map(i =>
       i.toString(16).padStart(2, '0')).join('');
 
     if ((pixels[off+3]) === 0) return;
 
-    if (!selected) {
-      // create a new group if there is nothing currently selected
-      const group = createGroup([]);
-      group.appendChild(createColor(hex, true));
-      snapshot();
-
-    } else if (selected.classList.contains('group')) {
-      // add a new color to the group if a group is selected
-      selected.appendChild(createColor(hex, true));
-      snapshot();
-
-    } else if (selected.classList.contains('color') && selected.getAttribute('hex') !== hex) {
-      // update a color if a color is selected
-      selected.style.backgroundColor = '#' + hex;
-      selected.setAttribute('hex', hex);
-      snapshot();
-    }
+    // insert an individual color
+    insertColors([hex]);
   };
 
   $$('.images img').forEach(el => el.onclick = () => renderEyedropImage(el));
@@ -462,11 +590,23 @@ document.onkeydown = e => {
 function renderEyedropImage(image) {
   // create the element
   const canvas = $('#selector');
+  const overlay = $('#overlay');
   const ctx = canvas.getContext('2d');
+  const octx = overlay.getContext('2d');
 
   // set the canvas size
-  canvas.style.width = (dropWidth = canvas.width = ctx.canvas.width = image.naturalWidth) + 'px';
-  canvas.style.height = (dropHeight = canvas.height = ctx.canvas.height = image.naturalHeight) + 'px';
+  canvas.style.width =
+  overlay.style.width = (
+    canvas.width = ctx.canvas.width =
+    overlay.width = octx.canvas.width =
+    dropWidth = image.naturalWidth
+  ) + 'px';
+  canvas.style.height =
+  overlay.style.height = (
+    canvas.height = ctx.canvas.height =
+    overlay.height = octx.canvas.height =
+    dropHeight = image.naturalHeight
+  ) + 'px';
   $('.eyedrop-container').style.width = dropWidth + 32 + 'px';
   $('.eyedrop-container').style.height = dropHeight + 32 + 'px';
 
