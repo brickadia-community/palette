@@ -32,7 +32,7 @@ tr:hover td {
 }
 
 .keybinds td:first-child {
-  max-width: 200px;
+  width: 150px;
 }
 
 #dropper {
