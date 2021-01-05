@@ -157,9 +157,9 @@ function drawSelectLine([sX, sY]=[-1,-1], [eX, eY]=[-1,-1], dragSizeX=2, [e2X, e
   ctx.textBaseline = 'top';
   ctx.fillStyle = 'black'
   const text = 'Selection: ' + dragSizeX + (dragSizeY > 1 ? ' x ' + dragSizeY : '');
-  ctx.fillText(text, 1, 1);
+  ctx.fillText(text, 6, 6);
   ctx.fillStyle = 'white'
-  ctx.fillText(text, 0, 0);
+  ctx.fillText(text, 5, 5);
 }
 
 let dragging = false;
