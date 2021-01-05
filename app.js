@@ -44,7 +44,10 @@ function undo() {
 
 // get hex color at
 const getHexAt = (x, y) => {
-  const off = (dropWidth * Math.max(y, 0) + Math.max(x, 0)) * 4;
+  const off = (
+    dropWidth * Math.min(Math.max(y, 0), dropHeight - 1) +
+    Math.min(Math.max(x, 0), dropWidth - 1)
+  ) * 4;
   return [pixels[off], pixels[off+1], pixels[off+2]].map(i =>
     i.toString(16).padStart(2, '0')).join('');
 }
@@ -227,7 +230,7 @@ window.onload = () => {
   };
 
   $('#selector').onmouseup = e =>{
-    if (e.button === 0 && dragging && dragSizeY > 1) {
+    if (e.button === 0 && dragging) {
       $('#selector').onclick(e);
     }
   };
@@ -271,8 +274,7 @@ window.onload = () => {
       dropper.style.transform = 'translate(-50%, -100%)';
     }
     dropper.style.backgroundColor = `rgb(${pixels[off]}, ${pixels[off+1]}, ${pixels[off+2]})`;
-    const hex = [pixels[off], pixels[off+1], pixels[off+2]].map(i =>
-      i.toString(16).padStart(2, '0')).join('');
+    const hex = getHexAt(x, y);
     if (used.includes(hex))
       dropper.innerHTML = '&check;';
     else
