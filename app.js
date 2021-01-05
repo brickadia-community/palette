@@ -44,7 +44,7 @@ function undo() {
 
 // get hex color at
 const getHexAt = (x, y) => {
-  const off = (dropWidth * y + x) * 4;
+  const off = (dropWidth * Math.max(y, 0) + Math.max(x, 0)) * 4;
   return [pixels[off], pixels[off+1], pixels[off+2]].map(i =>
     i.toString(16).padStart(2, '0')).join('');
 }
@@ -73,9 +73,9 @@ function drawSelectLine([sX, sY]=[-1,-1], [eX, eY]=[-1,-1], dragSizeX=2, [e2X, e
   // reset canvas
   const overlay = $('#overlay');
   const ctx = overlay.getContext('2d');
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'center';
+  ctx.font = '14px monospace';
   ctx.strokeStyle = 'black';
+
   ctx.clearRect(0, 0, dropWidth, dropHeight);
 
   // colors used in the drag
@@ -84,6 +84,9 @@ function drawSelectLine([sX, sY]=[-1,-1], [eX, eY]=[-1,-1], dragSizeX=2, [e2X, e
 
   if (lengthX < 10)
     return;
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
 
   dropper.style.display = 'none';
 
@@ -146,6 +149,14 @@ function drawSelectLine([sX, sY]=[-1,-1], [eX, eY]=[-1,-1], dragSizeX=2, [e2X, e
     }
     ctx.restore();
   }
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = 'black'
+  const text = 'Selection: ' + dragSizeX + (dragSizeY > 1 ? ' x ' + dragSizeY : '');
+  ctx.fillText(text, 1, 1);
+  ctx.fillStyle = 'white'
+  ctx.fillText(text, 0, 0);
 }
 
 let dragging = false;
@@ -162,7 +173,7 @@ const dragLength = () => Math.hypot(
 );
 
 window.onload = () => {
-  let fakeClick = false;
+  repaintPreview();
   // hide the dropper on mouse leave
   $('#selector').onmouseleave = e => {
     const dropper = $('#dropper');
@@ -175,11 +186,7 @@ window.onload = () => {
   $('#selector').onmousedown = e => {
     const { layerX: x, layerY: y } = e;
 
-    if (dragging && dragSizeY > 1) {
-      $('#selector').onclick(e);
-      fakeClick = true;
-      return;
-    }
+    if (!pixels) return;
 
     // left button
     if (e.button === 0) {
@@ -191,8 +198,13 @@ window.onload = () => {
     }
     // right button
     if (e.button === 2 && dragging && dragLength() >= 10) {
-      dragPosY = [x, y];
-      dragSizeY = 2;
+      if (dragSizeY > 1) {
+        dragPosY = [-1, -1];
+        dragSizeY = 1;
+      } else {
+        dragPosY = [x, y];
+        dragSizeY = 2;
+      }
     }
   };
   $('#selector').oncontextmenu = e => {
@@ -345,7 +357,10 @@ window.onload = () => {
     if (e.dataTransfer.items) {
       const item = e.dataTransfer.items[0];
       const file = item.getAsFile();
-      if (item.type === 'text/plain' || file.name.endsWith('.bp') || file.name.endsWith('.pal')) {
+      if (item.type === 'text/plain' ||
+        file.name.toLowerCase().endsWith('.bp') ||
+        file.name.toLowerCase().endsWith('.pal')
+      ) {
         try {
           importText(await file.text());
         } catch (err) {

@@ -2,7 +2,7 @@ body, html {
   margin: 0;
   background-color: black;
   color: white;
-  font-family: monospace;
+  font-family: 'Inconsolata', monospace;
 }
 
 body {
@@ -24,11 +24,15 @@ h1, h2, h3 {
 }
 
 table {
-  border-spacing: none;
+  border-collapse: collapse;
 }
 
 tr:hover td {
   background-color: #111;
+}
+
+.keybinds {
+  max-width: 550px;
 }
 
 .keybinds td:first-child {
@@ -62,7 +66,6 @@ tr:hover td {
   height: 170px;
   resize: both;
   overflow: scroll;
-  margin: 14px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
   background: repeating-conic-gradient(#f5f5f5 0% 25%, white 0% 50%)
     50% / 20px 20px;
@@ -83,8 +86,12 @@ tr:hover td {
   pointer-events: none;
 }
 
-.picker {
+.info-container {
   display: flex;
+}
+.info-split {
+  flex: 1;
+  margin: 14px;
 }
 
 .info {
@@ -267,4 +274,21 @@ tr:hover td {
 }
 .preview:hover img {
   display: block;
+}
+
+b {
+  color: #afa;
+  text-shadow: 0 0 4px #afa;
+}
+u {
+  color: #faa;
+}
+p, h1, .picker {
+  margin: 14px;
+}
+.info h1, .info h2 {
+  margin-bottom: 0;
+}
+.info h2 {
+  margin: 0;
 }

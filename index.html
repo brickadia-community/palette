@@ -1,11 +1,13 @@
 <head>
   <title>Palette Editor</title>
   <link rel="stylesheet" type="text/css" href="./style.css">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;900&display=swap" rel="stylesheet">
   <script src="./app.js"></script>
 </head>
 <body>
-  <h1 style="margin-left: 14px;">Palette editor</h1>
-  <p style="margin-left: 14px;">Scroll down to bottom for information</p>
+  <h1>Palette Editor</h1>
+  <p>Keybinds and Usage are at the bottom of the page.</p>
   <div class="picker">
     <div class="eyedrop-container">
       <div class="eyedrop">
@@ -22,7 +24,7 @@
       </div>
     </div>
   </div>
-  <h1 style="margin-left: 14px;">Palette</h1>
+  <h1>Palette</h1>
   <input type="color" id="colorPicker" value="#ffffff">
   <div id="palette"></div>
   <div class="preview">
@@ -33,47 +35,55 @@
   <div class="info" id="noinfo">
     <a id="download" style="display: none"></a>
     <h1>Info</h1>
-    <h2>Usage</h2>
-    <ul>
-      <li>Click + buttons to add groups/colors to the palette.</li>
-      <li>Click the group stub or a color to select a color.</li>
-      <li>Clicking on the color selector image will modify the selected color or add a new color to the group.</li>
-      <li>Left click, drag, and scroll on the color selector image to add multiple colors.</li>
-      <li>Left click, drag, scroll, right click+release, drag, scroll, release left click on the color selector image to add a 2d grid of colors.</li>
-      <li>Selected groups/colors can be re-arranged with the below keybinds.</li>
-      <li>Paste an image from clipboard or drag file to upload to the color selector.</li>
-      <li>Paste a preset from clipboard or drag file in to replace the current preset.</li>
-      <li>Paste a blockland colorset from clipboard or drag file in to replace the current preset.</li>
-      <li>Paste a PAL from clipboard or drag file in to replace the current preset.</li>
-      <li>Brickadia will not load any palettes larger than 16x16.</li>
-      <li>Click <a href="#noinfo">here</a> to hide info.</li>
-    </ul>
-    <h2>Keybinds</h2>
-    <table class="keybinds">
-      <thead><tr><th>Key</th><th>Description</th></tr></thead>
-      <tbody>
-        <tr><td>Ctrl+Z</td><td>Undo</td></tr>
-        <tr><td>Ctrl+Shift+Z</td><td>Redo</td></tr>
-        <tr><td>Ctrl+Shift+S</td><td>Download preset</td></tr>
-        <tr><td>Enter, Shift+E</td><td>Next group, new if last group/no other groups</td></tr>
-        <tr><td>Space</td><td>Unselect selected</td></tr>
-        <tr><td>R</td><td>Rename selected group</td></tr>
-        <tr><td>Shift+R</td><td>Change palette description</td></tr>
-        <tr><td>C</td><td>Show color picker for selected color</td></tr>
-        <tr><td>E</td><td>Insert new color after selected color</td></tr>
-        <tr><td>W/S</td><td>Up/down in group</td></tr>
-        <tr><td>A/D</td><td>Left/Right among groups</td></tr>
-        <tr><td>Shift+W/S</td><td>Swap color up/down in group</td></tr>
-        <tr><td>Shift+A/D</td><td>Swap color to group left/right or move group</td></tr>
-        <tr><td>Ctrl+A/D</td><td>Move color to group left/right</td></tr>
-        <tr><td>Delete, Shift+X</td><td>Remove color, will remove group if group is empty</td></tr>
-        <tr><td>Ctrl+Shift+Delete</td><td>Reset palette</td></tr>
-      </tbody>
-    </table>
-    <h2>Example images (Click to demo)</h2>
-    <div class="images">
-      <img src="https://i.imgur.com/qzF7dNY.png" crossorigin="anonymous">
-      <img src="https://i.imgur.com/wdUUC5I.png" crossorigin="anonymous">
+    <div class="info-container">
+      <div class="info-split">
+        <h2>Usage</h2>
+        <ul>
+          <li>Click + buttons to <b>add groups/colors</b> to the palette.</li>
+          <li>Click the group stub or a color to <b>select a color</b>.</li>
+          <li>Clicking on the color selector image will <b>modify the selected color</b> or <b>add a new color</b> to the group.</li>
+          <li>Left click, drag, and scroll on the color selector image to <b>add multiple colors</b>.</li>
+          <li>Left click, drag, scroll, right click+release, drag, scroll, release left click on the color selector image to <b>add a 2d grid of colors</b>.</li>
+          <li>Selected groups/colors can be <b>re-arranged</b> with the below keybinds.</li>
+          <li>Paste an image from clipboard or drag file to <b>upload to the color selector</b>.</li>
+          <li>Paste a <b>Brickadia preset</b> (.bp) from clipboard or drag file in to replace the current preset.</li>
+          <li>Paste a <b>Blockland colorset</b> (colorSet.txt) from clipboard or drag file in to replace the current preset.</li>
+          <li>Paste a <b>PAL file</b> (.pal) from clipboard or drag file in to replace the current preset.</li>
+          <li><u>Brickadia will not load any palettes larger than 16x16</u>.</li>
+          <li>Click <a href="#noinfo">here</a> to hide info.</li>
+        </ul>
+      </div>
+      <div class="info-split">
+        <h2>Keybinds</h2>
+        <table class="keybinds">
+          <thead><tr><th>Key</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>Ctrl+Z</td><td><b>Undo</b></td></tr>
+            <tr><td>Ctrl+Shift+Z</td><td><b>Redo</b></td></tr>
+            <tr><td>Ctrl+Shift+S</td><td><b>Download</b> preset</td></tr>
+            <tr><td>Enter, Shift+E</td><td>Next group, new if last group/no other groups</td></tr>
+            <tr><td>Space</td><td><b>Unselect</b> selected</td></tr>
+            <tr><td>R</td><td><b>Rename</b> selected group</td></tr>
+            <tr><td>Shift+R</td><td>Change palette <b>description</b></td></tr>
+            <tr><td>C</td><td>Show <b>color picker</b> for selected color</td></tr>
+            <tr><td>E</td><td>Insert <b>new color</b> after selected color</td></tr>
+            <tr><td>W/S</td><td><b>Move selector</b> up/down in group</td></tr>
+            <tr><td>A/D</td><td><b>Move selector</b> left/Right among groups</td></tr>
+            <tr><td>Shift+W/S</td><td><b>Swap color</b> up/down in group</td></tr>
+            <tr><td>Shift+A/D</td><td><b>Swap color</b> to group left/right or move group</td></tr>
+            <tr><td>Ctrl+A/D</td><td><b>Move color</b> to group left/right</td></tr>
+            <tr><td>Delete, Shift+X</td><td><b>Remove color</b>, will remove group if group is empty</td></tr>
+            <tr><td>Ctrl+Shift+Delete</td><td><b>Reset</b> palette</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div style="padding-left: 14px;">
+      <h2>Example images (Click to demo)</h2>
+      <div class="images">
+        <img src="https://i.imgur.com/qzF7dNY.png" crossorigin="anonymous">
+        <img src="https://i.imgur.com/wdUUC5I.png" crossorigin="anonymous">
+      </div>
     </div>
   </div>
 </body>
