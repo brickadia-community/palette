@@ -649,10 +649,13 @@ document.onkeydown = e => {
 
     // delete a group, select previous group
     if (selected.classList.contains('group')) {
-      if (selected.previousSibling && selected.previousSibling.classList.contains('group'))
+      if (selected.nextSibling && selected.nextSibling.classList.contains('group')) {
+        // select the next group
+        select(selected.nextSibling);
+      } else if (selected.previousSibling && selected.previousSibling.classList.contains('group')) {
         // select the previous group
         select(selected.previousSibling);
-      else {
+      } else {
         // select the first group
         const groups = $$('.group').filter(g => g !== selected);
         if (groups.length > 0)
@@ -662,10 +665,10 @@ document.onkeydown = e => {
     // delete a color, select previous color
     } else if (selected.classList.contains('color')) {
       // if the previous sibling is a color, select it
-      if (selected.previousSibling.classList.contains('color'))
-        select(selected.previousSibling);
-      else if (selected.nextSibling)
+      if (selected.nextSibling && selected.nextSibling.classList.contains('color'))
         select(selected.nextSibling);
+      else if (selected.previousSibling && selected.previousSibling.classList.contains('color'))
+        select(selected.previousSibling);
       else
         // select the group instead
         select(selected.parentNode);
