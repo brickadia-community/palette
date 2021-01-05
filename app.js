@@ -165,6 +165,7 @@ function drawSelectLine([sX, sY]=[-1,-1], [eX, eY]=[-1,-1], dragSizeX=2, [e2X, e
 let dragging = false;
 let dragSizeX = 2;
 let dragSizeY = 1;
+let was2D = false;
 let startPos = [-1, -1]; // drag start position
 let dragPosX = [-1, -1]; // first dimension dragging
 let dragPosY = [-1, -1]; // second dimension dragging
@@ -198,6 +199,7 @@ window.onload = () => {
       dragPosY = [-1, -1];
       dragSizeY = 1;
       dragging = true;
+      was2D = false;
     }
     // right button
     if (e.button === 2 && dragging && dragLength() >= 10) {
@@ -207,6 +209,7 @@ window.onload = () => {
       } else {
         dragPosY = [x, y];
         dragSizeY = 2;
+        was2D = true;
       }
     }
   };
@@ -230,7 +233,7 @@ window.onload = () => {
   };
 
   $('#selector').onmouseup = e =>{
-    if (e.button === 0 && dragging) {
+    if (e.button === 0 && dragging && was2D) {
       $('#selector').onclick(e);
     }
   };
