@@ -176,6 +176,39 @@ const dragLength = () => Math.hypot(
   startPos[0] - (dragSizeY > 1 ? dragPosY[0] : dragPosX[0]),
 );
 
+// insert a list of colors
+const insertColors = (colors, forceGroup) => {
+  const selected = $('.selected');
+  const hex = colors[0];
+  if (!selected || forceGroup) {
+    // create a new group if there is nothing currently selected
+    const group = createGroup([], colors.length !== 1);
+    for (const hex of colors)
+      group.appendChild(createColor(hex, true));
+    if (!forceGroup)
+      snapshot();
+
+  } else if (selected.classList.contains('group')) {
+    // add a new color to the group if a group is selected
+    for (const hex of colors)
+      selected.appendChild(createColor(hex, true));
+    snapshot();
+
+  // a color is selected but we're dragging - add after this color
+  } else if (selected.classList.contains('color') && colors.length > 1) {
+    colors.reverse();
+    for(const hex of colors)
+      selected.after(createColor(hex, true));
+    snapshot();
+
+  } else if (colors.length === 1 && selected.classList.contains('color') && selected.getAttribute('hex') !== hex) {
+    // update a color if a color is selected
+    selected.style.backgroundColor = '#' + hex;
+    selected.setAttribute('hex', hex);
+    snapshot();
+  }
+}
+
 window.onload = () => {
   repaintPreview();
   // hide the dropper on mouse leave
@@ -286,39 +319,6 @@ window.onload = () => {
 
   // add the color on click
   $('#selector').onclick = e => {
-    const selected = $('.selected');
-
-    // insert a list of colors
-    const insertColors = (colors, forceGroup) => {
-      const hex = colors[0];
-      if (!selected || forceGroup) {
-        // create a new group if there is nothing currently selected
-        const group = createGroup([], colors.length !== 1);
-        for (const hex of colors)
-          group.appendChild(createColor(hex, true));
-        if (!forceGroup)
-          snapshot();
-
-      } else if (selected.classList.contains('group')) {
-        // add a new color to the group if a group is selected
-        for (const hex of colors)
-          selected.appendChild(createColor(hex, true));
-        snapshot();
-
-      // a color is selected but we're dragging - add after this color
-      } else if (selected.classList.contains('color') && colors.length > 1) {
-        colors.reverse();
-        for(const hex of colors)
-          selected.after(createColor(hex, true));
-
-      } else if (colors.length === 1 && selected.classList.contains('color') && selected.getAttribute('hex') !== hex) {
-        // update a color if a color is selected
-        selected.style.backgroundColor = '#' + hex;
-        selected.setAttribute('hex', hex);
-        snapshot();
-      }
-    }
-
     if (!pixels) return;
 
     // handle drag color selectin
@@ -350,7 +350,7 @@ window.onload = () => {
 
     // insert an individual color
     insertColors([hex]);
-    genFavicon('#' + hex)
+    genFavicon('#' + hex);
   };
 
   $$('.images img').forEach(el => el.onclick = () => renderEyedropImage(el));
@@ -493,12 +493,11 @@ document.onkeydown = e => {
     }
 
   } else if (e.code === 'KeyC' && !e.ctrlKey && !e.shiftKey) {
-    if (!selected || !selected.classList.contains('color')) return;
-    $('#colorPicker').value = '#' + selected.getAttribute('hex');
+    $('#colorPicker').value = '#' + (selected && selected.classList.contains('color')
+      ? selected.getAttribute('hex')
+      : 'ffffff');
     $('#colorPicker').onchange = e => {
-      selected.setAttribute('hex', e.target.value.replace(/^#/, ''))
-      selected.style.backgroundColor = e.target.value;
-      snapshot();
+      insertColors([e.target.value.replace(/^#/, '')]);
       $('#colorPicker').onchange = () => {};
     };
     $('#colorPicker').click();
@@ -1120,7 +1119,7 @@ function genFavicon(color) {
   const link = document.createElement('link');
   link.type = 'image/x-icon';
   link.rel = 'shortcut icon';
-  link.href = canvas.toDataURL("image/x-icon");
+  link.href = canvas.toDataURL('image/x-icon');
   document.getElementsByTagName('head')[0].appendChild(link);
 }
 genFavicon(`hsl(${Math.random() * 360}, 100%, 50%)`);
