@@ -364,8 +364,7 @@ window.onload = () => {
       const item = e.dataTransfer.items[0];
       const file = item.getAsFile();
       if (item.type === 'text/plain' ||
-        file.name.toLowerCase().endsWith('.bp') ||
-        file.name.toLowerCase().endsWith('.pal')
+        file.name.match(/.(bp|pal|txt|gpl)$/i)
       ) {
         try {
           importText(await file.text());
@@ -1017,7 +1016,9 @@ function importText(text) {
   const blocklandRegex = /(((\d{1,3} \d{1,3} \d{1,3} \d{1,3}|\d\.\d{1,} \d\.\d{1,} \d\.\d{1,} \d\.\d{1,})(\s*)(\/\/.*)?\r?\n)+(\r?\n)*DIV:.*)/g;
   const palRegex = /^JASC-PAL\r?\n0100\r?\n\d+\r?\n(\d+ \d+ \d+\r?\n)+/;
   const paintNetRegex = /^; paint\.net Palette File\r?\n(;.*\r?\n)+([a-fA-F0-9]{8}\r?\n)+/;
+  const gimpRegex = /^GIMP Palette\r?\n(.+: .*\r?\n)*#\r?\n((\s*\d+\s+\d+\s+\d+(\s+\d+)?\t.*\r?\n)+)$/
   const blMatches = text.replace(/[ ]*\/\/.*/, '').match(blocklandRegex);
+
   if (blMatches) {
     const data = {
       description: 'Imported from blockland colorset',
@@ -1066,18 +1067,39 @@ function importText(text) {
 
   if (text.match(paintNetRegex)) {
     const colors = text
-    .match(/([a-fA-F0-9]{8})(?:\r?\n)/g)
-    .map(c => {
-      const [, ...hex] = c.match(/..(..)(..)(..)/);
-      const [r, g, b] = linearRGB(hex.map(c => parseInt(c, 16)));
-      return { r, g, b, a: 255 };
-    });
+      .match(/([a-fA-F0-9]{8})(?:\r?\n)/g)
+      .map(c => {
+        const [, ...hex] = c.match(/..(..)(..)(..)/);
+        const [r, g, b] = linearRGB(hex.map(c => parseInt(c, 16)));
+        return { r, g, b, a: 255 };
+      });
     const groups = [];
     while(colors.length) {
       groups.push({colors: colors.splice(0, 16), name: ''});
     }
     const data = {
       description: 'Imported from paint.net palette',
+      groups,
+    }
+    initPalette(data);
+    snapshot();
+    return;
+  }
+
+  const gimpMatch = text.match(gimpRegex);
+  if (gimpMatch) {
+    const colors = gimpMatch[2]
+      .match(/\s*(\d+)\s+(\d+)\s+(\d+)(\s+\d+)?\t.*\r?\n/g)
+      .map(c => {
+        const [r, g, b] = linearRGB(c.match(/\d+/g).slice(0, 3).map(Number));
+        return { r, g, b, a: 255 };
+      });
+    const groups = [];
+    while(colors.length) {
+      groups.push({colors: colors.splice(0, 16), name: ''});
+    }
+    const data = {
+      description: 'Imported from gimp palette',
       groups,
     }
     initPalette(data);
