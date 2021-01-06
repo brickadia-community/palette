@@ -270,6 +270,7 @@ tr:hover td {
 }
 
 .preview img {
+  pointer-events: none;
   position: absolute;
   top: 0;
   left: 0;

@@ -350,6 +350,7 @@ window.onload = () => {
 
     // insert an individual color
     insertColors([hex]);
+    genFavicon('#' + hex)
   };
 
   $$('.images img').forEach(el => el.onclick = () => renderEyedropImage(el));
@@ -1094,3 +1095,32 @@ function importImage(file) {
   };
   reader.readAsDataURL(file);
 }
+
+// generate a favicon
+function genFavicon(color) {
+  var canvas = document.createElement('canvas');
+  canvas.width = 32;
+  canvas.height = 32;
+  const ctx = canvas.getContext('2d');
+  ctx.canvas.width = 32;
+  ctx.canvas.height = 32;
+
+  const wedgeSize = 10;
+  ctx.save();
+  ctx.translate(16, 28 - 1.41 * wedgeSize / 2);
+  ctx.beginPath();
+  ctx.moveTo(0, 1.41 * wedgeSize / 2);
+  ctx.arc(0, -1.41 * wedgeSize / 2, 10, Math.PI, 0);
+  ctx.lineTo(0, 1.41 * wedgeSize / 2);
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.stroke();
+
+  const link = document.createElement('link');
+  link.type = 'image/x-icon';
+  link.rel = 'shortcut icon';
+  link.href = canvas.toDataURL("image/x-icon");
+  document.getElementsByTagName('head')[0].appendChild(link);
+}
+genFavicon(`hsl(${Math.random() * 360}, 100%, 50%)`);
