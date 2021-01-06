@@ -1014,19 +1014,19 @@ async function repaintPreview() {
 
 // import text from clipboard or file
 function importText(text) {
-  const blocklandRegex = /(((\d{1,3} \d{1,3} \d{1,3} \d{1,3}|\d\.\d{3} \d\.\d{3} \d\.\d{3} \d\.\d{3})(\s*)(\/\/.*)?\r?\n)+DIV:.*)/g;
+  const blocklandRegex = /(((\d{1,3} \d{1,3} \d{1,3} \d{1,3}|\d\.\d{1,} \d\.\d{1,} \d\.\d{1,} \d\.\d{1,})(\s*)(\/\/.*)?\r?\n)+(\r?\n)*DIV:.*)/g;
   const palRegex = /^JASC-PAL\r?\n0100\r?\n\d+\r?\n(\d+ \d+ \d+\r?\n)+/;
-  text = text.replace(/[ ]*\/\/.*/, '')
-  const blMatches = text.match(blocklandRegex);
+  const paintNetRegex = /^; paint\.net Palette File\r?\n(;.*\r?\n)+([a-fA-F0-9]{8}\r?\n)+/;
+  const blMatches = text.replace(/[ ]*\/\/.*/, '').match(blocklandRegex);
   if (blMatches) {
     const data = {
       description: 'Imported from blockland colorset',
       groups: blMatches.map(div => ({
         colors: div
-          .match(/(\d{1,3} \d{1,3} \d{1,3} \d{1,3}|\d\.\d{3} \d\.\d{3} \d\.\d{3} \d\.\d{3})/g)
+          .match(/(\d{1,3} \d{1,3} \d{1,3} \d{1,3}|\d\.\d{1,} \d\.\d{1,} \d\.\d{1,} \d\.\d{1,})/g)
           .map(c => {
             let [sR, sG, sB] = c.split(' ').map(Number);
-            if (c.match(/\d\.\d{3} \d\.\d{3} \d\.\d{3} \d\.\d{3}/)) {
+            if (c.match(/\d\.\d{1,} \d\.\d{1,} \d\.\d{1,} \d\.\d{1,}/)) {
               sR *= 255;
               sG *= 255;
               sB *= 255;
@@ -1057,6 +1057,27 @@ function importText(text) {
     }
     const data = {
       description: 'Imported from pal file',
+      groups,
+    }
+    initPalette(data);
+    snapshot();
+    return;
+  }
+
+  if (text.match(paintNetRegex)) {
+    const colors = text
+    .match(/([a-fA-F0-9]{8})(?:\r?\n)/g)
+    .map(c => {
+      const [, ...hex] = c.match(/..(..)(..)(..)/);
+      const [r, g, b] = linearRGB(hex.map(c => parseInt(c, 16)));
+      return { r, g, b, a: 255 };
+    });
+    const groups = [];
+    while(colors.length) {
+      groups.push({colors: colors.splice(0, 16), name: ''});
+    }
+    const data = {
+      description: 'Imported from paint.net palette',
       groups,
     }
     initPalette(data);
