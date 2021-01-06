@@ -296,3 +296,27 @@ p, h1, .picker {
 .info h2 {
   margin: 0;
 }
+
+.color:nth-child(18) ~ .color::after,
+.group:nth-child(17) ~ .group .color::after {
+  content: '!';
+  font-size: 12px;
+  background-color: red;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  margin: -5px -5px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.color:nth-child(18) ~ .color:hover::after,
+.group:nth-child(17) ~ .group .color:hover::after {
+  content: 'Palette too large';
+  position: absolute;
+  padding: 2px 4px;
+  white-space: nowrap;
+  width: auto;
+  border-radius: 6px;
+}
