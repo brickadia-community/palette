@@ -10,6 +10,8 @@ body {
 }
 
 #selector {
+  background: repeating-conic-gradient(#f5f5f5 0% 25%, white 0% 50%)
+    50% / 20px 20px;
 }
 
 #overlay {
@@ -67,23 +69,23 @@ tr:hover td {
   height: 170px;
   resize: both;
   overflow: scroll;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-  background: repeating-conic-gradient(#f5f5f5 0% 25%, white 0% 50%)
-    50% / 20px 20px;
+  background-color: black;
+  border: 2px solid #112;
 }
 
 .eyedrop {
   position: relative;
+  width: auto;
 }
 
 .instructions {
-  color: #444;
+  color: white;
   font-weight: bold;
   position: absolute;
   top: 14px;
   left: 14px;
-  background-color: white;
-  box-shadow: 0 0 30px 10px white;
+  background-color: #111;
+  box-shadow: 0 0 5px 5px #111;
   pointer-events: none;
 }
 
@@ -320,4 +322,21 @@ p, h1, .picker {
   white-space: nowrap;
   width: auto;
   border-radius: 6px;
+}
+
+
+::-webkit-scrollbar {
+  width: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #162841;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #224c7b;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #fff;
 }

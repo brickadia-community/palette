@@ -95,7 +95,8 @@ function drawSelectLine([sX, sY]=[-1,-1], [eX, eY]=[-1,-1], dragSizeX=2, [e2X, e
   // reset canvas
   const overlay = $('#overlay');
   const ctx = overlay.getContext('2d');
-  ctx.font = '14px monospace';
+  ctx.font = '14px \'Inconsolata\'';
+  ctx.fontWeight = 'bold';
   ctx.strokeStyle = 'black';
   ctx.lineWidth = 1;
 
@@ -181,10 +182,10 @@ function drawSelectLine([sX, sY]=[-1,-1], [eX, eY]=[-1,-1], dragSizeX=2, [e2X, e
 
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
-  ctx.fillStyle = 'black'
   const text = 'Selection: ' + dragSizeX + (dragSizeY > 1 ? ' x ' + dragSizeY : '');
-  ctx.fillText(text, 6, 6);
   ctx.fillStyle = 'white'
+  ctx.fillText(text, 6, 6);
+  ctx.fillStyle = 'black'
   ctx.fillText(text, 5, 5);
 }
 
@@ -237,6 +238,7 @@ const insertColors = (colors, forceGroup) => {
 
 window.onload = () => {
   repaintPreview();
+  $('#selector').style.display = 'none';
   // hide the dropper on mouse leave
   $('#selector').onmouseleave = e => {
     const dropper = $('#dropper');
@@ -747,30 +749,32 @@ document.onkeyup = e => {
 function renderEyedropImage(image) {
   // create the element
   const canvas = $('#selector');
+  canvas.style.display = 'block';
   const overlay = $('#overlay');
   const ctx = canvas.getContext('2d');
   const octx = overlay.getContext('2d');
+  const margin = 32;
 
   // set the canvas size
   canvas.style.width =
   overlay.style.width = (
     canvas.width = ctx.canvas.width =
     overlay.width = octx.canvas.width =
-    dropWidth = image.naturalWidth
+    dropWidth = (image.naturalWidth + margin * 2)
   ) + 'px';
   canvas.style.height =
   overlay.style.height = (
     canvas.height = ctx.canvas.height =
     overlay.height = octx.canvas.height =
-    dropHeight = image.naturalHeight
+    dropHeight = (image.naturalHeight + margin * 2)
   ) + 'px';
-  $('.eyedrop-container').style.width = dropWidth + 32 + 'px';
-  $('.eyedrop-container').style.height = dropHeight + 32 + 'px';
+  $('.eyedrop-container').style.width = dropWidth + 18 + 'px';
+  $('.eyedrop-container').style.height = dropHeight + 18 + 'px';
 
 
   // draw the image
-  ctx.drawImage(image, 0, 0);
-  const imageData = ctx.getImageData(0, 0, image.naturalWidth, image.naturalHeight);
+  ctx.drawImage(image, margin, margin);
+  const imageData = ctx.getImageData(0, 0, dropWidth, dropHeight);
   pixels = imageData.data;
 
   $('.instructions').style.display = 'none';
