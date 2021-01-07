@@ -10,6 +10,8 @@ const debounceRepaint = debounce(repaintPreview, 1000);
 const history = [];
 let undoStack = [];
 let used = [];
+let shiftDown = false;
+const piOver4 = Math.PI/4;
 
 // add a palette snapshot to history
 // if you read this code and want to kill me, I understand
@@ -59,16 +61,33 @@ let rowColors2D = [];
 function drawSelectLine([sX, sY]=[-1,-1], [eX, eY]=[-1,-1], dragSizeX=2, [e2X, e2Y]=[-1, -1], dragSizeY=1) {
   if (!pixels) return;
   // angle between start and end
-  const thetaX = Math.atan2(eY - sY, eX - sX);
+  let thetaX = Math.atan2(eY - sY, eX - sX);
   // length between start and end
   const lengthX = Math.hypot(sY - eY, sX - eX);
   // size of line divided into chunks
   const segmentX = lengthX / (dragSizeX - 1);
 
+  // if shift key is pressed, round angles to 45deg
+  if (shiftDown) {
+    thetaX = Math.round(thetaX/(piOver4))*(piOver4);
+    eX = sX + Math.cos(thetaX) * lengthX;
+    eY = sY + Math.sin(thetaX) * lengthX;
+  }
+
   // same thing for the second drag
-  const thetaY = Math.atan2(e2Y - eY, e2X - eX);
-  const lengthY = Math.hypot(e2Y - eY, e2X - eX);
-  const segmentY = lengthY / (dragSizeY - 1);
+  let thetaY = Math.atan2(e2Y - eY, e2X - eX);
+  let lengthY = Math.hypot(e2Y - eY, e2X - eX);
+  let segmentY = lengthY / (dragSizeY - 1);
+
+  // if shift key is pressed, round angles on y axis to 45deg
+  // these can't be done at the same time because thetaY/etc depend on the updated eX/eY
+  if (shiftDown && dragSizeY > 1) {
+    thetaY = Math.round(thetaY/(piOver4))*(piOver4);
+    e2X = eX + Math.cos(thetaY) * lengthY;
+    e2Y = eY + Math.sin(thetaY) * lengthY;
+    lengthY = Math.hypot(e2Y - eY, e2X - eX);
+    segmentY = lengthY / (dragSizeY - 1);
+  }
 
   // size of the pin
   const wedgeSize = 10;
@@ -460,6 +479,10 @@ const getIndex = el => {
 document.onkeydown = e => {
   const selected = $('.selected');
 
+  if (e.key === 'Shift') {
+    shiftDown = true;
+  }
+
   // if shift key is pressed, use swap instead of select
   const modFn = e.shiftKey ? el => {
     // if the swap would be illegal, do a select instead
@@ -712,6 +735,12 @@ document.onkeydown = e => {
   } else {
     // debug key stuff
     // console.log(e.key, e.code, e);
+  }
+};
+
+document.onkeyup = e => {
+  if (e.key === 'Shift') {
+    shiftDown = false;
   }
 };
 
