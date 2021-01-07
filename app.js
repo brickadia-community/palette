@@ -282,6 +282,21 @@ window.onload = () => {
     }
   }
 
+  const resetCopy = debounce(() => $('.preview').classList.remove('copied'), 1000);
+  $('.preview').onclick = e => {
+    try {
+      $('#testImg').toBlob(blob => {
+        navigator.clipboard.write([
+          new ClipboardItem({'image/png': blob})
+        ]);
+        $('.preview').classList.add('copied');
+        resetCopy();
+      });
+    } catch (err) {
+      console.error('error getting image from canvas', err);
+    }
+  };
+
   window.onwheel = e => {
     if (dragging) {
       if (dragSizeY > 1) {
@@ -981,20 +996,24 @@ async function repaintPreview() {
   const canvas = $('#testImg');
   const parrot = $('#parrot');
   const ctx = canvas.getContext('2d');
-  canvas.style.width = parrot.width + 'px';
-  canvas.style.height = parrot.height + 'px';
-  ctx.canvas.width = parrot.width;
-  ctx.canvas.height = parrot.height;
+  const { width, height } = parrot;
+
+  const swatchSize = 8;
+  const swatchMargin = 2;
+
+  canvas.style.width = (ctx.canvas.width =
+    (width + (swatchSize + swatchMargin) * 16)) + 'px';
+  canvas.style.height = (ctx.canvas.height = height) + 'px';
 
   // get the colors from this palette
   const colors = $$('.color').map(c => c.style.backgroundColor.match(/[\d\.]+/g).map(Number).slice(0, 3));
 
   // render the parrot
-  ctx.drawImage(parrot, 0, 0, parrot.width, parrot.height);
+  ctx.drawImage(parrot, 0, 0, width, height);
   if (colors.length < 2) return;
 
   // get the image data
-  const imageData = ctx.getImageData(0, 0, parrot.width, parrot.height);
+  const imageData = ctx.getImageData(0, 0, width, height);
   const pixels = imageData.data;
 
   // cached color match
@@ -1004,9 +1023,10 @@ async function repaintPreview() {
   // await this to wait for a new frame (async rendering)
   const frame = () => new Promise(resolve => requestAnimationFrame(resolve));
 
+  const text = localStorage.temp;
+
   // render the preview parrot using the palette
   let lastFrame = performance.now();
-  const { width, height } = parrot;
 
   // iterate through pixels
   for (let y = 0, i = 0; y < height; y++) {
@@ -1046,6 +1066,20 @@ async function repaintPreview() {
 
   // render final image
   ctx.putImageData(imageData, 0, 0);
+
+  const groups = $$('.group');
+  for (let i = 0; i < Math.min(groups.length, 16); i++) {
+    const swatches = $$('.color', groups[i]);
+    for (let j = 0; j < Math.min(swatches.length, 16); j++) {
+      ctx.fillStyle = '#' + swatches[j].getAttribute('hex');
+      ctx.fillRect(
+        i * (swatchSize + swatchMargin) + width + swatchMargin,
+        j * (swatchSize + swatchMargin),
+        swatchSize,
+        swatchSize,
+      );
+    }
+  }
 
   console.timeEnd('Paint');
 };

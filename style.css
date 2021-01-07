@@ -268,8 +268,9 @@ tr:hover td {
 
 .preview {
   margin-left: 14px;
-  width: 100%;
   position: relative;
+  cursor: pointer;
+  display: inline-block;
 }
 
 .preview img {
@@ -281,6 +282,30 @@ tr:hover td {
 }
 .preview:hover img {
   display: block;
+}
+
+.preview::before {
+  position: absolute;
+  color: white;
+  display: flex;
+  top: 0;
+  left: calc(100% + 8px);
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  pointer-events: none;
+  color: white;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.preview:hover::before {
+  content: 'Click to copy test image';
+  background-color: #224;
+}
+.preview.copied::before {
+  content: 'Copied to clipboard!';
+  background-color: rgba(100, 255, 100, 0.6);
 }
 
 b {
