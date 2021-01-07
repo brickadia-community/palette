@@ -78,6 +78,7 @@ function drawSelectLine([sX, sY]=[-1,-1], [eX, eY]=[-1,-1], dragSizeX=2, [e2X, e
   const ctx = overlay.getContext('2d');
   ctx.font = '14px monospace';
   ctx.strokeStyle = 'black';
+  ctx.lineWidth = 1;
 
   ctx.clearRect(0, 0, dropWidth, dropHeight);
 
@@ -102,11 +103,17 @@ function drawSelectLine([sX, sY]=[-1,-1], [eX, eY]=[-1,-1], dragSizeX=2, [e2X, e
     ctx.lineTo(0, 1.41 * wedgeSize / 2);
     ctx.closePath();
     ctx.fillStyle = '#' + hex;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'black';
+    ctx.stroke();
     ctx.fill();
+    ctx.lineWidth = 1;
+    const isDuplicate = used.includes(hex) || rowColors.includes(hex);
+    ctx.strokeStyle = isDuplicate ? '#f55' : 'white';
     ctx.stroke();
 
     // draw an X for duplicate colors
-    if (used.includes(hex) || rowColors.includes(hex)) {
+    if (isDuplicate) {
       ctx.translate(0, -1.14 * wedgeSize/2);
       ctx.fillStyle = 'black'
       ctx.fillText('x', 1, 1);
@@ -1156,7 +1163,11 @@ function genFavicon(color) {
   ctx.lineTo(0, 1.41 * wedgeSize / 2);
   ctx.closePath();
   ctx.fillStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
   ctx.fill();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'white';
   ctx.stroke();
 
   const link = document.createElement('link');
