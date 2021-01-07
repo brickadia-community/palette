@@ -716,7 +716,7 @@ document.onkeydown = e => {
   // next group/new group
   } else if (e.key === 'Enter' || e.code === 'KeyE' && e.shiftKey) {
     // nothing is selected - create a new group
-    if (!selected) {
+    if (!selected || selected.classList.contains('color')) {
       createGroup([]);
       snapshot();
 
@@ -730,7 +730,6 @@ document.onkeydown = e => {
         createGroup([]);
         snapshot();
       }
-
     }
   } else {
     // debug key stuff
