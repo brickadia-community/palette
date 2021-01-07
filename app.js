@@ -11,6 +11,7 @@ const history = [];
 let undoStack = [];
 let used = [];
 let shiftDown = false;
+let altDown = false;
 const piOver4 = Math.PI/4;
 
 // add a palette snapshot to history
@@ -299,16 +300,22 @@ window.onload = () => {
 
   window.onwheel = e => {
     if (dragging) {
-      if (dragSizeY > 1) {
+      if (dragSizeY > 1 && !altDown) {
         dragSizeY = Math.min(Math.max(dragSizeY - Math.sign(e.deltaY), 2), 16);
       } else {
         dragSizeX = Math.min(Math.max(dragSizeX - Math.sign(e.deltaY), 2), 16);
+        if (altDown) {
+          dragSizeY = Math.max(Math.min(Math.round(
+            Math.abs(dragPosY[0] - startPos[0])/
+            Math.abs(dragPosY[1] - startPos[1])*dragSizeX
+          ), 16), 2);
+        }
       }
       drawSelectLine(startPos, dragPosX, dragSizeX, dragPosY, dragSizeY);
     }
   };
 
-  $('#selector').onmouseup = e =>{
+  $('#selector').onmouseup = e => {
     if (e.button === 0 && dragging && was2D) {
       $('#selector').onclick(e);
     }
@@ -320,20 +327,29 @@ window.onload = () => {
     const dropper = $('#dropper');
 
     if (dragging) {
-      if (dragSizeY > 1) {
+      if (altDown) {
+        dragPosX = [startPos[0], y]
         dragPosY = [x, y];
-        drawSelectLine(startPos, dragPosX, dragSizeX, dragPosY, dragSizeY);
-        return;
+        dragSizeY = Math.max(Math.min(Math.round(
+          Math.abs(x - startPos[0])/
+          Math.abs(y - startPos[1])*dragSizeX
+        ), 16), 2);
       } else {
-        dragPosX = [x, y];
-        if (dragLength() >= 10) {
+        if (dragSizeY > 1) {
+          dragPosY = [x, y];
           drawSelectLine(startPos, dragPosX, dragSizeX, dragPosY, dragSizeY);
-          document.body.style.overflow = 'hidden';
           return;
         } else {
-          drawSelectLine();
-          document.body.style.overflow = 'flex';
+          dragPosX = [x, y];
         }
+      }
+      if (dragLength() >= 10) {
+        drawSelectLine(startPos, dragPosX, dragSizeX, dragPosY, dragSizeY);
+        document.body.style.overflow = 'hidden';
+        return;
+      } else {
+        drawSelectLine();
+        document.body.style.overflow = 'flex';
       }
     }
 
@@ -406,6 +422,7 @@ window.onload = () => {
     if (e.dataTransfer.items) {
       const item = e.dataTransfer.items[0];
       const file = item.getAsFile();
+      if (!file) return;
       if (item.type === 'text/plain' ||
         file.name.match(/.(bp|pal|txt|gpl)$/i)
       ) {
@@ -498,6 +515,9 @@ document.onkeydown = e => {
 
   if (e.key === 'Shift') {
     shiftDown = true;
+  }
+  if (e.key === 'Alt') {
+    altDown = true;
   }
 
   // if shift key is pressed, use swap instead of select
@@ -758,6 +778,9 @@ document.onkeyup = e => {
   if (e.key === 'Shift') {
     shiftDown = false;
   }
+  if (e.key === 'Alt') {
+    altDown = false;
+  }
 };
 
 // update the color selecting canvas with an image
@@ -968,7 +991,7 @@ function initPalette(data) {
 
 // distance between two colors
 function colorDifference([r1, g1, b1], [r2, g2, b2]) {
-  return Math.sqrt(
+  return (
     (r1 - r2) * (r1 - r2) +
     (g1 - g2) * (g1 - g2) +
     (b1 - b2) * (b1 - b2)
