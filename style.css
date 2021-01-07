@@ -12,6 +12,7 @@ body {
 #selector {
   background: repeating-conic-gradient(#f5f5f5 0% 25%, white 0% 50%)
     50% / 20px 20px;
+  background-position: 0 0;
 }
 
 #overlay {
@@ -65,12 +66,13 @@ tr:hover td {
 }
 
 .eyedrop-container {
-  width: 400px;
+  width: 450px;
   height: 170px;
   resize: both;
   overflow: scroll;
-  background-color: black;
-  border: 2px solid #112;
+  background: repeating-conic-gradient(#0f0f0f 0% 25%, #090909 0% 50%)
+    50% / 20px 20px;
+  background-position: 0 0;
 }
 
 .eyedrop {
@@ -80,12 +82,10 @@ tr:hover td {
 
 .instructions {
   color: white;
-  font-weight: bold;
+  font-weight: normal;
   position: absolute;
   top: 14px;
   left: 14px;
-  background-color: #111;
-  box-shadow: 0 0 5px 5px #111;
   pointer-events: none;
 }
 
