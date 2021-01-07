@@ -1000,9 +1000,10 @@ async function repaintPreview() {
 
   const swatchSize = 8;
   const swatchMargin = 2;
+  const groups = $$('.group');
 
   canvas.style.width = (ctx.canvas.width =
-    (width + (swatchSize + swatchMargin) * 16)) + 'px';
+    (width + (swatchSize + swatchMargin) * Math.min(groups.length, 16))) + 'px';
   canvas.style.height = (ctx.canvas.height = height) + 'px';
 
   // get the colors from this palette
@@ -1067,7 +1068,6 @@ async function repaintPreview() {
   // render final image
   ctx.putImageData(imageData, 0, 0);
 
-  const groups = $$('.group');
   for (let i = 0; i < Math.min(groups.length, 16); i++) {
     const swatches = $$('.color', groups[i]);
     for (let j = 0; j < Math.min(swatches.length, 16); j++) {
