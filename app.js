@@ -342,7 +342,6 @@ window.onload = () => {
             Math.abs(dragPosY[0] - startPos[0])/
             (Math.abs(dragPosY[1] - startPos[1]))*dragSizeX+1
           ), 16), 2);
-          console.log(Math.abs(x-startPos[0]), Math.abs(y-startPos[1]), Math.abs(x-startPos[0])/Math.abs(y-startPos[1]))
         }
       } else {
         if (dragSizeY > 1) {
