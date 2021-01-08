@@ -305,9 +305,9 @@ window.onload = () => {
       } else {
         dragSizeX = Math.min(Math.max(dragSizeX - Math.sign(e.deltaY), 2), 16);
         if (altDown) {
-          dragSizeY = Math.max(Math.min(Math.round(
+          dragSizeY = shiftDown ? dragSizeX : Math.max(Math.min(Math.floor(
             Math.abs(dragPosY[0] - startPos[0])/
-            Math.abs(dragPosY[1] - startPos[1])*dragSizeX
+            (Math.abs(dragPosY[1] - startPos[1]))*dragSizeX+1
           ), 16), 2);
         }
       }
@@ -328,12 +328,22 @@ window.onload = () => {
 
     if (dragging) {
       if (altDown) {
-        dragPosX = [startPos[0], y]
-        dragPosY = [x, y];
-        dragSizeY = Math.max(Math.min(Math.round(
-          Math.abs(x - startPos[0])/
-          Math.abs(y - startPos[1])*dragSizeX
-        ), 16), 2);
+        if (shiftDown) {
+          const dx = (x - startPos[0]);
+          const dy = (y - startPos[1]);
+          const max = Math.max(Math.abs(dx), Math.abs(dy));
+          dragPosX = [startPos[0], startPos[1] + max * Math.sign(dy)]
+          dragPosY = [startPos[0] + max * Math.sign(dx), startPos[1] + max * Math.sign(dy)];
+          dragSizeY = dragSizeX;
+        } else {
+          dragPosX = [startPos[0], y]
+          dragPosY = [x, y];
+          dragSizeY = Math.max(Math.min(Math.floor(
+            Math.abs(dragPosY[0] - startPos[0])/
+            (Math.abs(dragPosY[1] - startPos[1]))*dragSizeX+1
+          ), 16), 2);
+          console.log(Math.abs(x-startPos[0]), Math.abs(y-startPos[1]), Math.abs(x-startPos[0])/Math.abs(y-startPos[1]))
+        }
       } else {
         if (dragSizeY > 1) {
           dragPosY = [x, y];
