@@ -250,6 +250,9 @@ window.onload = () => {
   };
 
   $('#selector').onmousedown = e => {
+    altDown = e.altKey;
+    shiftDown = e.shiftKey;
+
     const { layerX: x, layerY: y } = e;
 
     if (!pixels) return;
@@ -276,6 +279,9 @@ window.onload = () => {
     }
   };
   $('#selector').oncontextmenu = e => {
+    altDown = e.altKey;
+    shiftDown = e.shiftKey;
+
     if (dragging && dragLength() >= 10) {
       e.preventDefault();
       e.stopPropagation();
@@ -299,6 +305,9 @@ window.onload = () => {
   };
 
   window.onwheel = e => {
+    altDown = e.altKey;
+    shiftDown = e.shiftKey;
+
     if (dragging) {
       if (dragSizeY > 1 && !altDown) {
         dragSizeY = Math.min(Math.max(dragSizeY - Math.sign(e.deltaY), 2), 16);
@@ -316,6 +325,9 @@ window.onload = () => {
   };
 
   $('#selector').onmouseup = e => {
+    altDown = e.altKey;
+    shiftDown = e.shiftKey;
+
     if (e.button === 0 && dragging && was2D) {
       $('#selector').onclick(e);
     }
@@ -323,6 +335,9 @@ window.onload = () => {
 
   // set the eyedrop color on hover
   $('#selector').onmousemove = e => {
+    altDown = e.altKey;
+    shiftDown = e.shiftKey;
+
     const { layerX: x, layerY: y } = e;
     const dropper = $('#dropper');
 
@@ -387,6 +402,9 @@ window.onload = () => {
 
   // add the color on click
   $('#selector').onclick = e => {
+    altDown = e.altKey;
+    shiftDown = e.shiftKey;
+
     if (!pixels) return;
 
     // handle drag color selectin
