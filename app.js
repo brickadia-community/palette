@@ -1212,7 +1212,7 @@ function importText(text) {
   const gimpMatch = text.match(gimpRegex);
   if (gimpMatch) {
     const colors = gimpMatch[2]
-      .match(/\s*(\d+)\s+(\d+)\s+(\d+)(\s+\d+)?\t.*\r?\n/g)
+      .match(/\s*(\d+)\s+(\d+)\s+(\d+)(\s+\d+)?(\t.*)?\r?\n/g)
       .map(c => {
         const [r, g, b] = linearRGB(c.match(/\d+/g).slice(0, 3).map(Number));
         return { r, g, b, a: 255 };
