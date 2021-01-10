@@ -1139,7 +1139,7 @@ function importText(text) {
   const blocklandRegex = /(((\d{1,3} \d{1,3} \d{1,3} \d{1,3}|\d\.\d{1,} \d\.\d{1,} \d\.\d{1,} \d\.\d{1,})(\s*)(\/\/.*)?\r?\n)+(\r?\n)*DIV:.*)/g;
   const palRegex = /^JASC-PAL\r?\n0100\r?\n\d+\r?\n(\d+ \d+ \d+\r?\n)+/;
   const paintNetRegex = /^; paint\.net Palette File\r?\n(;.*\r?\n)+([a-fA-F0-9]{8}\r?\n)+/;
-  const gimpRegex = /^GIMP Palette\r?\n(.+: .*\r?\n)*#\r?\n((\s*\d+\s+\d+\s+\d+(\s+\d+)?\t.*\r?\n)+)$/
+  const gimpRegex = /^GIMP Palette\r?\n(.+: .*\r?\n)*#\r?\n((\s*\d+\s+\d+\s+\d+(\s+\d+)?(\t.*)?\r?\n)+)$/
   const blMatches = text.replace(/[ ]*\/\/.*/, '').match(blocklandRegex);
 
   if (blMatches) {
