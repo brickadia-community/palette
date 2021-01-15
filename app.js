@@ -12,6 +12,7 @@ let undoStack = [];
 let used = [];
 let shiftDown = false;
 let altDown = false;
+let previewOk = false;
 const piOver4 = Math.PI/4;
 
 // add a palette snapshot to history
@@ -290,7 +291,14 @@ window.onload = () => {
   }
 
   const resetCopy = debounce(() => $('.preview').classList.remove('copied'), 1000);
-  $('.preview').onclick = e => {
+  const resetDownload = debounce(() => $('.preview').classList.remove('saved'), 1000);
+  $('.preview').onclick = async e => {
+    if (shiftDown) {
+      await buildPaletteSave();
+      $('.preview').classList.add('saved');
+      resetDownload();
+      return;
+    }
     try {
       $('#testImg').toBlob(blob => {
         navigator.clipboard.write([
@@ -1043,6 +1051,7 @@ function debounce(func, wait, immediate) {
 
 // repaint test palette
 async function repaintPreview() {
+  previewOk = false;
   const canvas = $('#testImg');
   const parrot = $('#parrot');
   const ctx = canvas.getContext('2d');
@@ -1132,6 +1141,7 @@ async function repaintPreview() {
   }
 
   console.timeEnd('Paint');
+  previewOk = true;
 };
 
 // import text from clipboard or file
@@ -1293,3 +1303,61 @@ function genFavicon(color) {
   document.getElementsByTagName('head')[0].appendChild(link);
 }
 genFavicon(`hsl(${Math.random() * 360}, 100%, 50%)`);
+
+function buildPaletteSave() {
+  const name = prompt('Enter a save name', 'palette_demo');
+  if (!name) return;
+
+  const author = {
+    id: '1f7bdb6f-319c-47aa-a1d6-4316c494c553',
+    name: 'palette.brickadia.dev',
+  };
+
+  const bricks = [];
+
+  // iterate through all colors
+  const groups = $$('.group');
+  for (let x = 0; x < Math.min(groups.length, 16); x++) {
+    const swatches = $$('.color', groups[x]);
+    for (let y = 0; y < Math.min(swatches.length, 16); y++) {
+      const [r, g, b] = linearRGB(swatches[y].style.backgroundColor.match(/[\d\.]+/g).map(Number).slice(0, 3));
+      // build a brick for each material
+      for (let i = 0; i < 4; i++) {
+        const matX = ((i % 2) * 17) * 20;
+        const matY = (Math.floor(i / 2) * 17) * 20;
+        bricks.push({
+          asset_name_index: 0,
+          material_index: i,
+          color: [r, g, b, 255],
+          size: [5, 10, 2],
+          position: [x * 20 + matX + 5, y * 20 + matY + 5, 2],
+        }, {
+          asset_name_index: 1,
+          material_index: i,
+          color: [r, g, b, 255],
+          size: [5, 10, 2],
+          position: [x * 20 + matX + 10 + 5, y * 20 + matY + 5, 2],
+        });
+      }
+    }
+  }
+
+  const blob = new Blob([BRS.write({
+      version: 4,
+      author,
+      description: 'Preview palette generated from palette.brickadia.dev',
+      brick_owners: [author],
+      brick_assets: ['PB_DefaultBrick', 'PB_DefaultTile'],
+      materials: [
+        'BMC_Plastic',
+        'BMC_Glow',
+        'BMC_Metallic',
+        'BMC_Hologram',
+      ],
+      bricks,
+  })]);
+
+  $('#download').href = URL.createObjectURL(blob);
+  $('#download').download = name + '.brs';
+  $('#download').click();
+}

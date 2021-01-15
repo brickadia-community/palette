@@ -300,11 +300,15 @@ tr:hover td {
 }
 
 .preview:hover::before {
-  content: 'Click to copy test image';
+  content: 'Click to copy test image, Shift click to download as save';
   background-color: #224;
 }
 .preview.copied::before {
   content: 'Copied to clipboard!';
+  background-color: rgba(100, 255, 100, 0.6);
+}
+.preview.saved::before {
+  content: 'Saved!';
   background-color: rgba(100, 255, 100, 0.6);
 }
 
