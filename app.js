@@ -15,6 +15,11 @@ let altDown = false;
 let previewOk = false;
 const piOver4 = Math.PI/4;
 
+const magic = 'palette.brickadia.dev'.split('').map(p => p.charCodeAt(0));
+
+// turn bytes into hex
+const hexFromBytes = rgb => rgb.map(i => i.toString(16).padStart(2, '0')).join('');
+
 // add a palette snapshot to history
 // if you read this code and want to kill me, I understand
 function snapshot() {
@@ -437,8 +442,7 @@ window.onload = () => {
     drawSelectLine([-1, -1], [-1, -1], 0);
     const { layerX: x, layerY: y } = e;
     const off = (dropWidth * y + x) * 4;
-    const hex = [pixels[off], pixels[off+1], pixels[off+2]].map(i =>
-      i.toString(16).padStart(2, '0')).join('');
+    const hex = hexFromBytes([pixels[off], pixels[off+1], pixels[off+2]]);
 
     if ((pixels[off+3]) === 0) return;
 
@@ -850,6 +854,51 @@ function renderEyedropImage(image) {
   const imageData = ctx.getImageData(0, 0, dropWidth, dropHeight);
   pixels = imageData.data;
 
+  const offX = dropWidth - margin - 1;
+  const offY = dropHeight - margin - 1;
+  let isPreview = true;
+  for (let i = 0; i < magic.length/3; i++) {
+    const shift = ((offX - i) + (dropWidth * offY)) * 4;
+    if (
+      magic[i * 3 + 0] !== pixels[shift + 0] ||
+      magic[i * 3 + 1] !== pixels[shift + 1] ||
+      magic[i * 3 + 2] !== pixels[shift + 2])
+      isPreview = false;
+  }
+
+  // if this is a preview image, import it based on the mini palette in the corner
+  if (isPreview) {
+    const groups = [];
+    for (let x = 0; x < 16; x++) {
+      if (pixels[((offX - x) + (dropWidth * (offY - 1))) * 4 + 3] === 0) break;
+      groups.push([])
+      for (let y = 0; y < 16; y++) {
+        const shift = ((offX - x) + (dropWidth * (offY - y - 1))) * 4;
+        // if there is an alpha, end this group
+        if (pixels[shift + 3] === 0) break;
+        // add the color to the group
+        groups[groups.length - 1].push(linearRGB([
+          pixels[shift + 0], pixels[shift + 1], pixels[shift + 2]
+        ]));
+      }
+      // remove empty group
+      if (groups[groups.length - 1].length === 0) groups.pop();
+    }
+
+    // importh the preview image
+    if (groups.length > 0) {
+      const data = {
+        description: 'Imported from palette.brickadia.dev preview',
+        groups: groups.map(gr => ({
+          colors: gr.map(([r,g,b]) =>
+            ({r, g, b, a: 255}))
+        })),
+      }
+      initPalette(data);
+      snapshot();
+    }
+  }
+
   $('.instructions').style.display = 'none';
 }
 
@@ -939,8 +988,7 @@ function save() {
             let [sR, sG, sB] = e.style.backgroundColor.match(/[\d\.]+/g).map(Number);
 
             // convert to hex
-            const hex = [sR, sG, sB].map(i =>
-              i.toString(16).padStart(2, '0')).join('');
+            const hex = hexFromBytes([sR, sG, sB]);
             used.push(hex);
 
             // convert sRGB to linear rgb
@@ -1061,8 +1109,8 @@ async function repaintPreview() {
   const swatchMargin = 2;
   const groups = $$('.group');
 
-  canvas.style.width = (ctx.canvas.width =
-    (width + (swatchSize + swatchMargin) * Math.min(groups.length, 16))) + 'px';
+  const previewWidth = width + (swatchSize + swatchMargin) * Math.min(groups.length, 16);
+  canvas.style.width = (ctx.canvas.width = previewWidth) + 'px';
   canvas.style.height = (ctx.canvas.height = height) + 'px';
 
   // get the colors from this palette
@@ -1137,7 +1185,18 @@ async function repaintPreview() {
         swatchSize,
         swatchSize,
       );
+
+      ctx.fillRect(
+        previewWidth - i - 1,
+        height - j - 2,
+        1, 1,
+      );
     }
+  }
+
+  for (let i = 0; i < magic.length / 3; i++) {
+    ctx.fillStyle = 'rgb(' + magic.slice(i * 3, i * 3 + 3).join(',') + ')';
+    ctx.fillRect(previewWidth - 1 - i, height - 1, 1, 1);
   }
 
   console.timeEnd('Paint');
