@@ -128,6 +128,20 @@ tr:hover td {
   cursor: pointer;
 }
 
+#downloadButton {
+  display: inline-flex;
+  padding: 0 8px;
+  font-size: 16px;
+  height: 20px;
+  margin-left: 8px;
+  margin-bottom: 4px;
+}
+
+.palette-title {
+  display: flex;
+  align-items: flex-end;
+}
+
 #palette {
   margin: 14px;
   background-color: #224;
@@ -300,7 +314,7 @@ tr:hover td {
 }
 
 .preview:hover::before {
-  content: 'Click to copy test image, Shift click to download as save';
+  content: 'Click to copy test image, Shift click to download a palette demo save';
   background-color: #224;
 }
 .preview.copied::before {

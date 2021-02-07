@@ -245,6 +245,7 @@ const insertColors = (colors, forceGroup) => {
 
 window.onload = () => {
   repaintPreview();
+  $('#downloadButton').onclick = savePreset;
   $('#selector').style.display = 'none';
   // hide the dropper on mouse leave
   $('#selector').onmouseleave = e => {
@@ -610,12 +611,7 @@ document.onkeydown = e => {
   // save on ctrl s
   } else if (e.code === 'KeyS' && e.ctrlKey && e.shiftKey) {
     e.preventDefault();
-    const name = prompt('Enter a save name', localStorage.lastName || 'Generated');
-    if (typeof name === 'object') return;
-    localStorage.lastName = name;
-    $('#download').href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(save(), 0, 2));
-    $('#download').download = name + '.bp';
-    $('#download').click();
+    savePreset();
 
   } else if ((e.code === 'KeyS' || e.code === 'KeyW') && e.ctrlKey) {
     e.preventDefault(); // prevent annoying save popup
@@ -821,6 +817,18 @@ document.onkeyup = e => {
     altDown = false;
   }
 };
+
+// save the preset as a .bp
+function savePreset() {
+  if ($$('.color').length === 0) return;
+
+  const name = prompt('Enter a save name', localStorage.lastName || 'Generated');
+  if (typeof name === 'object') return;
+  localStorage.lastName = name;
+  $('#download').href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(save(), 0, 2));
+  $('#download').download = name + '.bp';
+  $('#download').click();
+}
 
 // update the color selecting canvas with an image
 function renderEyedropImage(image) {
