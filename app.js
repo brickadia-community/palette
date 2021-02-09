@@ -1004,7 +1004,7 @@ function save() {
             return {r, g, b, a: 255};
           })
         };
-      }),
+      }).filter(g => g.colors.length > 0),
     },
   };
   localStorage.temp = JSON.stringify(data.data);
